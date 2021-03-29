@@ -33,7 +33,7 @@ try:
 except ImportError:
     from io import StringIO
 
-from setenvironment import *
+from setconfiguration import *
 
 from .common import *
 
@@ -104,11 +104,23 @@ class SetConfigurationCMakeTest(TestCase):
         print("Section  : {}".format(section))
 
         # parse a section
+        print("-"*40)
+        print("Execute Parser")
+        print("-"*40)
         data = parser.parse_section(section)
 
-        # Pretty print the actions (unchecked)
-        print("")
-        parser.pretty_print_actions(section)
+        # pretty print the output
+        print("-"*40)
+        print("Data")
+        print("-"*40)
+        pprint(data, width=120)
+
+        # pretty print the loginfo
+        print("-"*40)
+        print("LogInfo")
+        print("-"*40)
+        parser._loginfo_print()
+
         print("-----[ TEST END ]------------------------------------------")
 
         print("OK")
