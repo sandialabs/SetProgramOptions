@@ -1,0 +1,86 @@
+stages:
+  - test
+  - deploy
+  - make_docs
+  - publish
+
+before_script:
+  # display centos version
+  - cat /etc/issue
+  # - git config user.email
+
+  # Pull required packages
+  - python3 -m pip install pytest pytest-cov
+
+  # Get ConfigParserEnhanced
+  # See https://pip.pypa.io/en/stable/reference/pip_install/#git : useful data on how to format this link
+  #     https://stackoverflow.com/a/35998253/2059999 : also useful for some info on how to write the target
+  - python3 -m pip uninstall -y configparserenhanced
+  # make sure this wasn't installed somewhere?
+  - python3 -m pip uninstall -y setconfiguration
+  - python3 -m pip install --user git+https://gitlab+deploy-token-CI:${CI_GROUP_READ_TOKEN}@gitlab-ex.sandia.gov/trilinos-devops-consolidation/code/ConfigParserEnhanced.git@master#egg=configparserenhanced
+  # Methods that work on the command line but not in CI.
+  # - python3 -m pip install --user -r requirements.txt
+
+pytest:
+  stage: test
+  timeout: 10m
+  script:
+    #- bash ./exec-reqs-install.sh
+    - python3 -m pytest --cov=setconfiguration  --cov-report=term --cov-report=html --cov-config=.coveragerc
+  coverage: '/TOTAL\s*\d+\s+\d+\s+\d+\s+\d+\s+(\d+%)/'
+
+apptest:
+  stage: test
+  timeout: 10m
+  script:
+    - python3 ./exec-example-SetConfigurationCMake.py
+
+install:
+  stage: deploy
+  needs: [pytest]
+  script:
+    - python3 -m pip install --user wheel
+    # - python3 -m pip install --user .
+    # - python3 -m pip uninstall -y setconfiguration configparserenhanced
+    - python3 -m pip wheel --no-deps -w setconfiguration-dist .
+  artifacts:
+    name: "setconfiguration-dist"
+    paths:
+      - setconfiguration-dist/setconfiguration*.whl
+    expire_in: 2 weeks
+
+sphinx-documentation:
+  stage: make_docs
+  timeout: 20m
+  script:
+    - cd doc/
+    - python3 -m pip install -r requirements.txt
+    - bash make_html_docs.sh
+
+publish coverage:
+  stage: publish
+  timeout: 20m
+  rules:
+    - if: '$CI_COMMIT_BRANCH == $CI_DEFAULT_BRANCH'
+  script:
+    - python3 -m pytest --cov=setconfiguration --cov-report=term --cov-report=html --cov-config=.coveragerc
+    - rm -rf /home/josbrau/html_files/SetConfiguration/coverage
+    - mkdir -p /home/josbrau/html_files/SetConfiguration/coverage
+    - mv tests/htmlcov/* /home/josbrau/html_files/SetConfiguration/coverage/
+
+publish docs:
+  stage: publish
+  timeout: 20m
+  rules:
+    - if: '$CI_COMMIT_BRANCH == $CI_DEFAULT_BRANCH'
+  script:
+    - cd doc/
+    - python3 -m pip install -r requirements.txt
+    - bash make_html_docs.sh
+    - rm -rf /home/josbrau/html_files/SetConfiguration/doc
+    - mkdir -p /home/josbrau/html_files/SetConfiguration/doc
+    - mv html/* /home/josbrau/html_files/SetConfiguration/doc/
+
+
+

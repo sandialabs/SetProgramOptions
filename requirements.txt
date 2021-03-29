@@ -1,0 +1,11 @@
+# Core Requirements
+configparser
+
+# Unit Testing Requirements
+mock
+pytest
+pytest-cov
+
+# Private Repositories
+configparserenhanced @ git+https://gitlab-ex.sandia.gov/trilinos-devops-consolidation/code/ConfigParserEnhanced.git@master#egg=configparserenhanced
+
