@@ -51,11 +51,16 @@ def test_setprogramoptions(filename="config.ini"):
     # pre-parse all sections
     # parser.parse_all_sections()
 
-    section_name = "TEST_CONFIGURATION_A"
+    #section_name = "TEST_CONFIGURATION_A"
+    section_name = "TEST_CONFIGURATION_D"
 
     parse_section(parser, section_name)
 
-    return
+    pprint(parser.options, width=200, sort_dicts=False)
+
+    parser.gen_option_list(section_name)
+
+    return 0
 
 
 

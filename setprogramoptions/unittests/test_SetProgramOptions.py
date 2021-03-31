@@ -100,7 +100,7 @@ class SetProgramOptionsTest(TestCase):
         parser.exception_control_compact_warnings = False
 
         print("-----[ TEST BEGIN ]----------------------------------------")
-        section = "TEST_CONFIGURATION_A"
+        section = "TEST_CONFIGURATION_D"
         print("Section  : {}".format(section))
 
         # parse a section
