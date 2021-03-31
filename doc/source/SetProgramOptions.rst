@@ -1,19 +1,19 @@
 
-SetConfiguaration Class Reference
+SetProgramOptions Class Reference
 =================================
 
-The SetConfiguration module is an extension of ``configparserenhanced.ConfigParserEnhanced``
+The SetProgramOptions module is an extension of ``configparserenhanced.ConfigParserEnhanced``
 which implements handlers for *environment variable* and *environment modules* rules in
 a .ini file.
 
 API Documentation
 -----------------
-.. automodule:: setconfiguration.SetConfigurationCMake
+.. automodule:: setprogramoptions.SetProgramOptions
    :no-members:
 
 Public Methods
 ++++++++++++++
-.. autoclass:: setconfiguration.SetConfigurationCMake
+.. autoclass:: setprogramoptions.SetProgramOptions
    :noindex:
    :members:
    :undoc-members:

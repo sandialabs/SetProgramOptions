@@ -1,7 +1,7 @@
 #!/usr/bin/env python3
 # -*- mode: python; py-indent-offset: 4; py-continuation-offset: 4 -*-
 """
-SetConfigurationCMake
+SetProgramOptions
 
 Todo:
     Fill in the docstring for this file.
@@ -41,7 +41,7 @@ from configparserenhanced import *
 # ===============================
 
 
-class SetConfigurationCMake(ConfigParserEnhanced):
+class SetProgramOptions(ConfigParserEnhanced):
     """
     Todo:
         Add docstrings to functions and handlers.
@@ -54,6 +54,8 @@ class SetConfigurationCMake(ConfigParserEnhanced):
     def __init__(self, filename=None):
         if filename is not None:
             self.inifilepath = filename
+
+        self.configparser_delimiters = "="
 
 
     # -----------------------

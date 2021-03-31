@@ -20,7 +20,7 @@ sys.path.append(str(Path.cwd().parent.parent.resolve()))
 
 # -- Project information -----------------------------------------------------
 
-project   = 'SetConfiguration'
+project   = 'SetProgramOptions'
 copyright = '2021, Sandia National Laboratories'
 author    = 'William McLendon'
 

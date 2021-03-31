@@ -1,14 +1,14 @@
 #!/usr/bin/env python3
 # -*- mode: python; py-indent-offset: 4; py-continuation-offset: 4 -*-
 """
-Example app for SetConfiguration
+Example app for SetProgramOptions
 """
 from __future__ import print_function  # python 2 -> 3 compatiblity
 
 import os
 from pprint import pprint
 
-import setconfiguration
+import setprogramoptions
 
 
 
@@ -39,11 +39,11 @@ def find_config_ini(filename="config.ini", rootpath="." ):
 
 
 
-def test_setconfiguration(filename="config.ini"):
+def test_setprogramoptions(filename="config.ini"):
     print("filename    : {}".format(filename))
     print("")
 
-    parser = setconfiguration.SetConfigurationCMake(filename=filename)
+    parser = setprogramoptions.SetProgramOptions(filename=filename)
     parser.debug_level = 5
     parser.exception_control_level = 4
     parser.exception_control_compact_warnings = True
@@ -91,10 +91,10 @@ def main():
     """
     main app
     """
-    fname_ini = "config_test_setconfigurationcmake.ini"
+    fname_ini = "config_test_setprogramoptions.ini"
     fpath_ini = find_config_ini(filename=fname_ini)
 
-    test_setconfiguration(filename=fpath_ini)
+    test_setprogramoptions(filename=fpath_ini)
 
 
 

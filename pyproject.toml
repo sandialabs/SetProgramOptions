@@ -1,13 +1,13 @@
 [tool.poetry]
-name = "setconfiguration"
-version = "0.3.0"
-description = "Environment configuration helper."
+name = "setprogramoptions"
+version = "0.0.0"
+description = "Program options helper."
 authors = [
     "William McLendon <wcmclen@sandia.gov>"
 ]
 readme = "README.md"
-documentation = "http://10.202.35.89:8080/SetConfiguration/doc/index.html"
-repository = "https://gitlab-ex.sandia.gov/trilinos-devops-consolidation/code/SetConfiguration"
+documentation = "http://10.202.35.89:8080/SetProgramOptions/doc/index.html"
+repository = "https://gitlab-ex.sandia.gov/trilinos-devops-consolidation/code/SetProgramOptions"
 classifiers = [
     'Development Status :: 3 - Alpha',
     'Intended Audience :: DevOps',
@@ -16,7 +16,7 @@ classifiers = [
     'Programming Language :: Python :: 3 :: Only',
 ]
 packages = [
-    { include = 'setconfiguration' }
+    { include = 'setprogramoptions' }
 ]
 include = [ "CHANGELOG.md" ]
 

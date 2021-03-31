@@ -20,7 +20,7 @@ find . -name "*.py?" -exec rm {} \;           >& /dev/null
 #fi
 
 options=(
-    --cov=setconfiguration
+    --cov=setprogramoptions
     --cov-report=term
     #--cov-report=term-missing
     --cov-report=html

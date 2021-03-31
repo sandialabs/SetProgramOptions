@@ -33,7 +33,7 @@ try:
 except ImportError:
     from io import StringIO
 
-from setconfiguration import *
+from setprogramoptions import *
 
 from .common import *
 
@@ -71,14 +71,14 @@ global_gen_new_ground_truth_files = False
 
 
 
-class SetConfigurationCMakeTest(TestCase):
+class SetProgramOptionsTest(TestCase):
     """
-    Main test driver for the SetConfigurationCMake class
+    Main test driver for the SetProgramOptions class
     """
     def setUp(self):
         print("")
         self.maxDiff = None
-        self._filename = find_config_ini(filename="config_test_setconfigurationcmake.ini")
+        self._filename = find_config_ini(filename="config_test_setprogramoptions.ini")
 
         # Get the location of the unit testing scripts (for file writing tests)
         unit_test_path = os.path.realpath(__file__)
@@ -86,15 +86,15 @@ class SetConfigurationCMakeTest(TestCase):
         self.unit_test_path = os.path.dirname(unit_test_path)
 
 
-    def test_SetConfigurationCMake_Template(self):
+    def test_SetProgramOptions_Template(self):
         """
-        Basic template test for SetConfigurationCMake.
+        Basic template test for SetProgramOptions.
 
         This test doesn't really validate any output -- it just runs a basic check.
         """
         print("\n")
         print("Load file: {}".format(self._filename))
-        parser = SetConfigurationCMake(self._filename)
+        parser = SetProgramOptions(self._filename)
         parser.debug_level = 5
         parser.exception_control_level = 4
         parser.exception_control_compact_warnings = False

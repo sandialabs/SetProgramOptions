@@ -4,7 +4,7 @@ branch = True
 dynamic_context = test_function
 
 [paths]
-source = setconfiguration
+source = setprogramoptions
 
 [report]
 skip_covered = False
@@ -13,10 +13,11 @@ show_missing = True
 exclude_lines =
     pragma: no cover
     if 0:
+    if False:
 
 [html]
 directory = tests/htmlcov
-title = SetConfiguration Coverage Report
+title = SetProgramOptions Coverage Report
 show_contexts = True
 
 [xml]
