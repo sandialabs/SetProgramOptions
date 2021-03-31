@@ -17,7 +17,7 @@ before_script:
   #     https://stackoverflow.com/a/35998253/2059999 : also useful for some info on how to write the target
   - python3 -m pip uninstall -y configparserenhanced
   # make sure this wasn't installed somewhere?
-  - python3 -m pip uninstall -y setconfiguration
+  - python3 -m pip uninstall -y setprogramoptions
   - python3 -m pip install --user git+https://gitlab+deploy-token-CI:${CI_GROUP_READ_TOKEN}@gitlab-ex.sandia.gov/trilinos-devops-consolidation/code/ConfigParserEnhanced.git@master#egg=configparserenhanced
   # Methods that work on the command line but not in CI.
   # - python3 -m pip install --user -r requirements.txt
@@ -27,14 +27,14 @@ pytest:
   timeout: 10m
   script:
     #- bash ./exec-reqs-install.sh
-    - python3 -m pytest --cov=setconfiguration  --cov-report=term --cov-report=html --cov-config=.coveragerc
+    - python3 -m pytest --cov=setprogramoptions  --cov-report=term --cov-report=html --cov-config=.coveragerc
   coverage: '/TOTAL\s*\d+\s+\d+\s+\d+\s+\d+\s+(\d+%)/'
 
 apptest:
   stage: test
   timeout: 10m
   script:
-    - python3 ./exec-example-SetConfigurationCMake.py
+    - python3 ./exec-example-SetProgramOptions.py
 
 install:
   stage: deploy
@@ -42,12 +42,12 @@ install:
   script:
     - python3 -m pip install --user wheel
     # - python3 -m pip install --user .
-    # - python3 -m pip uninstall -y setconfiguration configparserenhanced
-    - python3 -m pip wheel --no-deps -w setconfiguration-dist .
+    # - python3 -m pip uninstall -y setprogramoptions configparserenhanced
+    - python3 -m pip wheel --no-deps -w setprogramoptions-dist .
   artifacts:
-    name: "setconfiguration-dist"
+    name: "setprogramoptions-dist"
     paths:
-      - setconfiguration-dist/setconfiguration*.whl
+      - setprogramoptions-dist/setprogramoptions*.whl
     expire_in: 2 weeks
 
 sphinx-documentation:
@@ -64,10 +64,10 @@ publish coverage:
   rules:
     - if: '$CI_COMMIT_BRANCH == $CI_DEFAULT_BRANCH'
   script:
-    - python3 -m pytest --cov=setconfiguration --cov-report=term --cov-report=html --cov-config=.coveragerc
-    - rm -rf /home/josbrau/html_files/SetConfiguration/coverage
-    - mkdir -p /home/josbrau/html_files/SetConfiguration/coverage
-    - mv tests/htmlcov/* /home/josbrau/html_files/SetConfiguration/coverage/
+    - python3 -m pytest --cov=setprogramoptions --cov-report=term --cov-report=html --cov-config=.coveragerc
+    - rm -rf /home/josbrau/html_files/SetProgramOptions/coverage
+    - mkdir -p /home/josbrau/html_files/SetProgramOptions/coverage
+    - mv tests/htmlcov/* /home/josbrau/html_files/SetProgramOptions/coverage/
 
 publish docs:
   stage: publish
@@ -78,9 +78,9 @@ publish docs:
     - cd doc/
     - python3 -m pip install -r requirements.txt
     - bash make_html_docs.sh
-    - rm -rf /home/josbrau/html_files/SetConfiguration/doc
-    - mkdir -p /home/josbrau/html_files/SetConfiguration/doc
-    - mv html/* /home/josbrau/html_files/SetConfiguration/doc/
+    - rm -rf /home/josbrau/html_files/SetProgramOptions/doc
+    - mkdir -p /home/josbrau/html_files/SetProgramOptions/doc
+    - mv html/* /home/josbrau/html_files/SetProgramOptions/doc/
 
 
 
