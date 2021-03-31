@@ -1,6 +1,6 @@
 #!/usr/bin/env bash
 
-python3 -m pip uninstall -y setconfiguration
+python3 -m pip uninstall -y setprogramoptions
 
 ./exec-reqs-install.sh
 
