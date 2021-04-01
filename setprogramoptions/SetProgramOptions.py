@@ -26,6 +26,7 @@ try:                  # pragma: no cover
 except ImportError:   # pragma: no cover
     pass
 
+from pathlib import Path
 from pprint import pprint
 import shlex
 
@@ -58,8 +59,6 @@ class SetProgramOptions(ConfigParserEnhanced):
         if filename is not None:
             self.inifilepath = filename
 
-        self.configparser_delimiters = "="
-
 
     # -----------------------
     #   P R O P E R T I E S
@@ -87,18 +86,75 @@ class SetProgramOptions(ConfigParserEnhanced):
     # -------------------------------
 
 
-    def gen_option_list(self, section) -> str:
+    def gen_option_list(self, section) -> list:
         """
         """
-        output = ""
+        output = []
+
+        if section not in self.options.keys():
+            self.parse_section(section)
+
+        section_data = self.options[section]
+
+        for option_entry in section_data:
+            line = self.gen_option_entry(option_entry)
+            if line is None:
+                self.exception_control_event("CATASTROPHIC", TypeError,
+                        "Failed to process option type {}.".format(option_entry['type']))
+            output.append(line)
 
         return output
 
 
+    def gen_option_entry(self, option_entry):
+        output = None
 
-    # -----------------------
-    #   H A N D L E R S
-    # -----------------------
+        method_name = None
+        method_ref  = None
+        for typename in option_entry['type']:
+            method_name = "_program_option_handler_" + str(typename)
+            (method_name, method_ref) = self._locate_class_method(method_name)
+            if method_ref is not None:
+                break
+        else:
+            return output
+
+        params = option_entry['params']
+        value  = option_entry['value']
+        output = method_ref(params, value)
+
+        return output
+
+
+    # ---------------------------------------------------------------
+    #   H A N D L E R S  -  P R O G R A M   O P T I O N S
+    # ---------------------------------------------------------------
+
+
+    def _generic_program_option_handler(self, params, value) -> str:
+        """
+        """
+        output = "".join(params)
+        if value is not None:
+            output += "={}".format(value)
+        return output
+
+
+    def _program_option_handler_opt_set(self, params, value) -> str:
+        """
+        """
+        return self._generic_program_option_handler(params, value)
+
+
+    def _program_option_handler_opt_set_cmake_cache(self, params, value) -> str:
+        """
+        """
+        return self._generic_program_option_handler(params,value)
+
+
+    # ---------------------------------------------------------------
+    #   H A N D L E R S  -  C O N F I G P A R S E R E N H A N C E D
+    # ---------------------------------------------------------------
 
 
     def handler_initialize(self, section_name, handler_parameters) -> int:
@@ -144,7 +200,7 @@ class SetProgramOptions(ConfigParserEnhanced):
         return 0
 
 
-    def _generic_option_handler(self, section_name, handler_parameters) -> int:
+    def _handler_opt_set(self, section_name, handler_parameters) -> int:
         """Generic Handler Template
 
         This handler is used for options whose ``key:value`` pair does not
@@ -166,58 +222,7 @@ class SetProgramOptions(ConfigParserEnhanced):
             * [1-10]: Reserved for future use (WARNING)
             * > 10  : An unknown failure occurred (CRITICAL)
         """
-        self._validate_parameter(section_name, (str) )
-        self.enter_handler(handler_parameters)
-
-        # -----[ Handler Content Start ]-------------------
-        data_shared_ref = handler_parameters.data_shared['setprogramoptions']
-        value  = handler_parameters.value
-        params = shlex.split(handler_parameters.raw_option[0])
-
-        entry = {'type': ['option'], 'value': value, 'params': params }
-
-        self.debug_message(1, "entry = {}".format(entry))
-
-        data_shared_ref.append(entry)
-
-        # -----[ Handler Content End ]---------------------
-
-        self.exit_handler(handler_parameters)
-        return 0
-
-
-    def _handler_opt_cmake_path_src(self, section_name, handler_parameters) -> int:
-        """
-
-        Args:
-            section_name (str): The name of the section being processed.
-            handler_parameters (HandlerParameters): The parameters passed to
-                the handler.
-
-        Returns:
-            int:
-            * 0     : SUCCESS
-            * [1-10]: Reserved for future use (WARNING)
-            * > 10  : An unknown failure occurred (CRITICAL)
-        """
-        return self._cmake_option_handler(section_name, handler_parameters)
-
-
-    def _handler_opt_cmake_path_build(self, section_name, handler_parameters) -> int:
-        """
-
-        Args:
-            section_name (str): The name of the section being processed.
-            handler_parameters (HandlerParameters): The parameters passed to
-                the handler.
-
-        Returns:
-            int:
-            * 0     : SUCCESS
-            * [1-10]: Reserved for future use (WARNING)
-            * > 10  : An unknown failure occurred (CRITICAL)
-        """
-        return self._cmake_option_handler(section_name, handler_parameters)
+        return self._option_handler_helper(section_name, handler_parameters)
 
 
     def _handler_opt_remove(self, section_name, handler_parameters) -> int:
@@ -251,8 +256,62 @@ class SetProgramOptions(ConfigParserEnhanced):
 
         removal_key = params[0]
 
-        data_shared_ref = list(filter(lambda x: removal_key not in x['params'], data_shared_ref))
+        if len(params) == 1:
+            self.debug_message(2, " -> Remove all options containing:`{}`".format(removal_key))
+            data_shared_ref = list(filter(lambda x: removal_key not in x['params'], data_shared_ref))
+
+        elif len(params) >= 2 and params[1]=="SUBSTR":
+            self.debug_message(2, " -> Remove all options containing SUBSTRING:`{}`".format(removal_key))
+            data_shared_ref = list(filter(lambda entry, rkey=removal_key:
+                                          all(rkey not in item for item in entry['params']),
+                                          data_shared_ref))
+        else:
+            message = "Malformed instruction `{}`".format(handler_parameters.raw_option)
+            self.exception_control_event("CATASTROPHIC", Exception, message)
+
         handler_parameters.data_shared['setprogramoptions'] = data_shared_ref
+        # -----[ Handler Content End ]---------------------
+
+        self.exit_handler(handler_parameters)
+        return 0
+
+
+    def _handler_opt_set_cmake_cache(self, section_name, handler_parameters) -> int:
+        """
+
+        Args:
+            section_name (str): The name of the section being processed.
+            handler_parameters (HandlerParameters): The parameters passed to
+                the handler.
+
+        Returns:
+            int:
+            * 0     : SUCCESS
+            * [1-10]: Reserved for future use (WARNING)
+            * > 10  : An unknown failure occurred (CRITICAL)
+        """
+        self._validate_parameter(section_name, (str) )
+        self.enter_handler(handler_parameters)
+
+        # -----[ Handler Content Start ]-------------------
+        data_shared_ref = handler_parameters.data_shared['setprogramoptions']
+        op     = handler_parameters.op
+        value  = handler_parameters.value
+        params = handler_parameters.params
+
+        # Toss out extra 'params'
+        params = params[:2]
+
+        # prepend the ":" to the TYPE specifier if we have one.
+        if len(params) == 2 and params[1] is not None:
+            params[1] = ":" + str(params[1])
+
+        # prepend the "-D" argument to the params list.
+        params = ["-D"] + params
+
+        entry = {'type': [op], 'value': value, 'params': params }
+
+        data_shared_ref.append(entry)
 
         # -----[ Handler Content End ]---------------------
 
@@ -265,7 +324,7 @@ class SetProgramOptions(ConfigParserEnhanced):
     # ---------------------------------
 
 
-    def _cmake_option_handler(self, section_name, handler_parameters) -> int:
+    def _option_handler_helper(self, section_name, handler_parameters) -> int:
         """
 
         Args:
@@ -323,4 +382,54 @@ class SetProgramOptions(ConfigParserEnhanced):
 
         return 0
 
+
+
+    #def _handler_opt_cmake_path_src(self, section_name, handler_parameters) -> int:
+        #"""
+
+        #Args:
+            #section_name (str): The name of the section being processed.
+            #handler_parameters (HandlerParameters): The parameters passed to
+                #the handler.
+
+        #Returns:
+            #int:
+            #* 0     : SUCCESS
+            #* [1-10]: Reserved for future use (WARNING)
+            #* > 10  : An unknown failure occurred (CRITICAL)
+        #"""
+        #return self._option_handler_helper(section_name, handler_parameters)
+
+
+    #def _handler_opt_cmake_path_build(self, section_name, handler_parameters) -> int:
+        #"""
+
+        #Args:
+            #section_name (str): The name of the section being processed.
+            #handler_parameters (HandlerParameters): The parameters passed to
+                #the handler.
+
+        #Returns:
+            #int:
+            #* 0     : SUCCESS
+            #* [1-10]: Reserved for future use (WARNING)
+            #* > 10  : An unknown failure occurred (CRITICAL)
+        #"""
+        #return self._option_handler_helper(section_name, handler_parameters)
+
+
+    #def _program_option_handler_opt_cmake_path_src(self, params, value) -> str:
+        #"""
+        #"""
+        #self._validate_parameter(value, (str))
+        #output = "-S=\"{}\"".format( str(value) )
+        #return output
+
+
+    #def _program_option_handler_opt_cmake_path_build(self, params, value) -> str:
+        #"""
+        #"""
+        #self._validate_parameter(value, (str))
+        #output = "-B=\"{}\"".format( str(value) )
+        #return output
 

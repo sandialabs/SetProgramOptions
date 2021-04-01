@@ -53,12 +53,16 @@ def test_setprogramoptions(filename="config.ini"):
 
     #section_name = "TEST_CONFIGURATION_A"
     section_name = "TEST_CONFIGURATION_D"
+    section_name = "TRILINOS_CONFIGURATION_ALPHA"
 
     parse_section(parser, section_name)
 
     pprint(parser.options, width=200, sort_dicts=False)
 
-    parser.gen_option_list(section_name)
+    option_list = parser.gen_option_list(section_name)
+
+    print("option_list:")
+    print( " \\\n    ".join(option_list) )
 
     return 0
 

@@ -38,43 +38,41 @@ from setprogramoptions import *
 from .common import *
 
 
-#===============================================================================
+# ===============================================================================
 #
 # General Utility Functions
 #
-#===============================================================================
+# ===============================================================================
 global_gen_new_ground_truth_files = False
-#global_gen_new_ground_truth_files = True     # comment this out for production.
+# global_gen_new_ground_truth_files = True     # comment this out for production.
 
 
-#===============================================================================
+# ===============================================================================
 #
 # General Utility Functions
 #
-#===============================================================================
+# ===============================================================================
 
 
-
-#===============================================================================
+# ===============================================================================
 #
 # Mock Helpers
 #
-#===============================================================================
+# ===============================================================================
 
 
-
-#===============================================================================
+# ===============================================================================
 #
 # Tests
 #
-#===============================================================================
-
+# ===============================================================================
 
 
 class SetProgramOptionsTest(TestCase):
     """
     Main test driver for the SetProgramOptions class
     """
+
     def setUp(self):
         print("")
         self.maxDiff = None
@@ -84,7 +82,6 @@ class SetProgramOptionsTest(TestCase):
         unit_test_path = os.path.realpath(__file__)
         self.unit_test_file = os.path.basename(unit_test_path)
         self.unit_test_path = os.path.dirname(unit_test_path)
-
 
     def test_SetProgramOptions_Template(self):
         """
@@ -104,21 +101,21 @@ class SetProgramOptionsTest(TestCase):
         print("Section  : {}".format(section))
 
         # parse a section
-        print("-"*40)
+        print("-" * 40)
         print("Execute Parser")
-        print("-"*40)
+        print("-" * 40)
         data = parser.parse_section(section)
 
         # pretty print the output
-        print("-"*40)
+        print("-" * 40)
         print("Data")
-        print("-"*40)
+        print("-" * 40)
         pprint(data, width=120)
 
         # pretty print the loginfo
-        print("-"*40)
+        print("-" * 40)
         print("LogInfo")
-        print("-"*40)
+        print("-" * 40)
         parser._loginfo_print()
 
         print("-----[ TEST END ]------------------------------------------")
@@ -126,3 +123,63 @@ class SetProgramOptionsTest(TestCase):
         print("OK")
         return
 
+    def test_SetProgramOptions_gen_option_list(self):
+        """
+        Basic template test for SetProgramOptions.
+
+        This test doesn't really validate any output -- it just runs a basic check.
+        """
+        print("\n")
+        print("Load file: {}".format(self._filename))
+        parser = SetProgramOptions(self._filename)
+        parser.debug_level = 5
+        parser.exception_control_level = 4
+        parser.exception_control_compact_warnings = False
+
+        print("-----[ TEST BEGIN ]----------------------------------------")
+        section = "TRILINOS_CONFIGURATION_ALPHA"
+        print("Section  : {}".format(section))
+
+        # parse a section
+        print("-" * 40)
+        print("Execute Parser")
+        print("-" * 40)
+        data = parser.parse_section(section)
+
+        # pretty print the output
+        print("-" * 40)
+        print("Data")
+        print("-" * 40)
+        pprint(data, width=120)
+
+        # pretty print the loginfo
+        print("-" * 40)
+        print("LogInfo")
+        print("-" * 40)
+        parser._loginfo_print()
+
+        print("-" * 40)
+        print("Option List")
+        print("-" * 40)
+        option_list_expect = ['cmake',
+                              '-G=Ninja',
+                              '-DTrilinos_ENABLE_COMPLEX:BOOL=ON',
+                              '-DTrilinos_ENABLE_THREAD_SAFE:BOOL=ON',
+                              '-DTrilinos_PARALLEL_COMPILE_JOBS_LIMIT=20',
+                              '-DTrilinos_PARALLEL_LINK_JOBS_LIMIT=4',
+                              '-DTrilinos_ENABLE_Kokkos:BOOL=ON',
+                              '-DTrilinos_ENABLE_KokkosCore:BOOL=ON',
+                              '-DTrilinos_ENABLE_KokkosKernels:BOOL=ON',
+                              '-DKokkosKernels_ENABLE_EXAMPLES:BOOL=ON',
+                              '-DTrilinos_ENABLE_Tpetra:BOOL=ON',
+                              '-DTpetra_INST_DOUBLE:BOOL=ON',
+                              '/path/to/build/dir']
+
+        option_list_actual = parser.gen_option_list(section)
+        pprint(option_list_actual, width=200)
+        self.assertListEqual(option_list_expect, option_list_actual)
+
+        print("-----[ TEST END ]------------------------------------------")
+
+        print("OK")
+        return
