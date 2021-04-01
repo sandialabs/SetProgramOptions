@@ -83,6 +83,7 @@ class SetProgramOptionsTest(TestCase):
         self.unit_test_file = os.path.basename(unit_test_path)
         self.unit_test_path = os.path.dirname(unit_test_path)
 
+
     def test_SetProgramOptions_Template(self):
         """
         Basic template test for SetProgramOptions.
@@ -97,7 +98,7 @@ class SetProgramOptionsTest(TestCase):
         parser.exception_control_compact_warnings = False
 
         print("-----[ TEST BEGIN ]----------------------------------------")
-        section = "TEST_CONFIGURATION_D"
+        section = "CMAKE_GENERATOR_NINJA"
         print("Section  : {}".format(section))
 
         # parse a section
@@ -122,6 +123,7 @@ class SetProgramOptionsTest(TestCase):
 
         print("OK")
         return
+
 
     def test_SetProgramOptions_gen_option_list(self):
         """
