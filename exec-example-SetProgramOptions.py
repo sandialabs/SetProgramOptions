@@ -43,7 +43,7 @@ def test_setprogramoptions(filename="config.ini"):
     print("filename    : {}".format(filename))
     print("")
 
-    parser = setprogramoptions.SetProgramOptions(filename=filename)
+    parser = setprogramoptions.SetProgramOptionsCMake(filename=filename)
     parser.debug_level = 5
     parser.exception_control_level = 4
     parser.exception_control_compact_warnings = True

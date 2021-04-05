@@ -86,8 +86,19 @@ class SetProgramOptions(ConfigParserEnhanced):
     # -------------------------------
 
 
-    def gen_option_list(self, section) -> list:
-        """
+    def gen_option_list(self, section, generator='bash') -> list:
+        """Generate a list of options for a section.
+
+        Args:
+            section (str): The section name that contains the options
+                we wish to process.
+            generator (str): What kind of generator are we to use to
+                build up our options list? Currently we allow ``bash``
+                but subclasses can define their own functions using the
+                format ``_gen_option_entry_<generator>(option_entry:dict)``
+
+        Returns:
+            list: A ``list`` containing the processed options text.
         """
         output = []
 
@@ -97,31 +108,10 @@ class SetProgramOptions(ConfigParserEnhanced):
         section_data = self.options[section]
 
         for option_entry in section_data:
-            line = self.gen_option_entry(option_entry)
-            if line is None:
-                self.exception_control_event("CATASTROPHIC", TypeError,
-                        "Failed to process option type {}.".format(option_entry['type']))
+            gen_method_name = "_gen_option_entry"
+            (method_name,method_ref) = self._locate_class_method(gen_method_name)
+            line = method_ref(option_entry, generator)
             output.append(line)
-
-        return output
-
-
-    def gen_option_entry(self, option_entry):
-        output = None
-
-        method_name = None
-        method_ref  = None
-        for typename in option_entry['type']:
-            method_name = "_program_option_handler_" + str(typename)
-            (method_name, method_ref) = self._locate_class_method(method_name)
-            if method_ref is not None:
-                break
-        else:
-            return output
-
-        params = option_entry['params']
-        value  = option_entry['value']
-        output = method_ref(params, value)
 
         return output
 
@@ -131,8 +121,67 @@ class SetProgramOptions(ConfigParserEnhanced):
     # ---------------------------------------------------------------
 
 
-    def _generic_program_option_handler(self, params, value) -> str:
+    def _gen_option_entry(self, option_entry: dict, generator='bash') -> str:
         """
+        Takes an ``option_entry`` and looks for a specialized handler
+        for that option **type**.
+
+        Args:
+            option_entry (dict): A dictionary storing a single *option* entry.
+
+        Returns:
+            str: A string containing the single entry for this option.
+
+        Raises:
+            ValueError: A ``ValueError`` is raised if we aren't able to locate
+                the options formatter.
+        """
+        output = None
+
+        method_name = None
+        method_ref  = None
+
+        method_name_list = []
+
+        # Look for a matching method in the list of 'types' that this operation
+        # could map to.
+        for typename in option_entry['type']:
+            method_name = "_".join(["_program_option_handler", str(typename), generator])
+            (method_name, method_ref) = self._locate_class_method(method_name)
+            if method_ref is not None:
+                break
+            method_name_list.append(method_name)
+        else:
+            # the for did _not_ exit via the break
+            message = ["ERROR: Unable to locate an option formatter named:"]
+            for method_name in method_name_list:
+                message.append("- `{}()`".format(method_name))
+            self.exception_control_event("CATASTROPHIC", ValueError, "\n".join(message))
+
+        # Found a match.
+        params = option_entry['params']
+        value  = option_entry['value']
+        output = method_ref(params, value)
+
+        return output
+
+
+    def _generic_program_option_handler_bash(self, params, value) -> str:
+        """Generic processer for generic bash options.
+
+        This is the simplest kind of option handler for bash-like commands
+        where we just concatenate all the ``params`` together and set them
+        equal to the ``value``.
+
+        Args:
+            params (list): A ``list`` of strings containing the parameters
+                that would be to the LHS or the ``=`` when constructing an
+                option entry.
+            value (str): A ``str`` that is placed to the RHS of the option
+                assignment expression.
+
+        Returns:
+            str: A ``str`` object representing an option.
         """
         output = "".join(params)
         if value is not None:
@@ -140,16 +189,10 @@ class SetProgramOptions(ConfigParserEnhanced):
         return output
 
 
-    def _program_option_handler_opt_set(self, params, value) -> str:
+    def _program_option_handler_opt_set_bash(self, params, value) -> str:
+        """BASH generator for ``opt-set`` operations.
         """
-        """
-        return self._generic_program_option_handler(params, value)
-
-
-    def _program_option_handler_opt_set_cmake_cache(self, params, value) -> str:
-        """
-        """
-        return self._generic_program_option_handler(params,value)
+        return self._generic_program_option_handler_bash(params, value)
 
 
     # ---------------------------------------------------------------
@@ -201,7 +244,7 @@ class SetProgramOptions(ConfigParserEnhanced):
 
 
     def _handler_opt_set(self, section_name, handler_parameters) -> int:
-        """Generic Handler Template
+        """Handler for ``opt-set`` operations
 
         This handler is used for options whose ``key:value`` pair does not
         get resolved to a proper ``<operation>`` and therefore do not get
@@ -226,7 +269,7 @@ class SetProgramOptions(ConfigParserEnhanced):
 
 
     def _handler_opt_remove(self, section_name, handler_parameters) -> int:
-        """handler_opt_remove
+        """Handler for ``opt-remove`` operations.
 
         Note:
             This method should not be overridden by subclasses.
@@ -248,7 +291,6 @@ class SetProgramOptions(ConfigParserEnhanced):
         # -----[ Handler Content Start ]-------------------
         data_shared_ref = handler_parameters.data_shared['setprogramoptions']
 
-        # value  = handler_parameters.value
         params = handler_parameters.params
 
         if params is None or len(params) == 0:
@@ -260,59 +302,13 @@ class SetProgramOptions(ConfigParserEnhanced):
             self.debug_message(2, " -> Remove all options containing:`{}`".format(removal_key))
             data_shared_ref = list(filter(lambda x: removal_key not in x['params'], data_shared_ref))
 
-        elif len(params) >= 2 and params[1]=="SUBSTR":
+        if len(params) >= 2 and params[1]=="SUBSTR":
             self.debug_message(2, " -> Remove all options containing SUBSTRING:`{}`".format(removal_key))
             data_shared_ref = list(filter(lambda entry, rkey=removal_key:
                                           all(rkey not in item for item in entry['params']),
                                           data_shared_ref))
-        else:
-            message = "Malformed instruction `{}`".format(handler_parameters.raw_option)
-            self.exception_control_event("CATASTROPHIC", Exception, message)
 
         handler_parameters.data_shared['setprogramoptions'] = data_shared_ref
-        # -----[ Handler Content End ]---------------------
-
-        self.exit_handler(handler_parameters)
-        return 0
-
-
-    def _handler_opt_set_cmake_cache(self, section_name, handler_parameters) -> int:
-        """
-
-        Args:
-            section_name (str): The name of the section being processed.
-            handler_parameters (HandlerParameters): The parameters passed to
-                the handler.
-
-        Returns:
-            int:
-            * 0     : SUCCESS
-            * [1-10]: Reserved for future use (WARNING)
-            * > 10  : An unknown failure occurred (CRITICAL)
-        """
-        self._validate_parameter(section_name, (str) )
-        self.enter_handler(handler_parameters)
-
-        # -----[ Handler Content Start ]-------------------
-        data_shared_ref = handler_parameters.data_shared['setprogramoptions']
-        op     = handler_parameters.op
-        value  = handler_parameters.value
-        params = handler_parameters.params
-
-        # Toss out extra 'params'
-        params = params[:2]
-
-        # prepend the ":" to the TYPE specifier if we have one.
-        if len(params) == 2 and params[1] is not None:
-            params[1] = ":" + str(params[1])
-
-        # prepend the "-D" argument to the params list.
-        params = ["-D"] + params
-
-        entry = {'type': [op], 'value': value, 'params': params }
-
-        data_shared_ref.append(entry)
-
         # -----[ Handler Content End ]---------------------
 
         self.exit_handler(handler_parameters)

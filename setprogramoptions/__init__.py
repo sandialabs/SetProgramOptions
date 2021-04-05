@@ -6,5 +6,6 @@ Init script for the SetProgramOptions package
 from .version import __version__
 
 from .SetProgramOptions import SetProgramOptions
+from .SetProgramOptionsCMake import SetProgramOptionsCMake
 
 
