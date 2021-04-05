@@ -76,11 +76,20 @@ class SetProgramOptionsCMake(SetProgramOptions):
     # ---------------------------------------------------------------
 
 
-    def _program_option_handler_opt_set_cmake_cache_cmake_fragment(self, params, value) -> str:
+    def _program_option_handler_opt_set_cmake_cache_fragment(self,
+                                                             params: list,
+                                                             value: str) -> str:
         """
         """
         output = None
         raise NotImplementedError("TODO")
+        # This should kick off generation of the CMake cache line. Input is the
+        # params list and the value string.
+        # Name is kind of long - but it's also generated:
+        #     _program_option_handler_<type_name>_<generator>()
+        #  where:
+        #     type_name = `opt_set`
+        #     generator = `cmake_cache_fragment`
         return output
 
 
