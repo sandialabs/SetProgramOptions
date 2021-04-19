@@ -59,10 +59,22 @@ def test_setprogramoptions(filename="config.ini"):
 
     pprint(parser.options, width=200, sort_dicts=False)
 
-    option_list = parser.gen_option_list(section_name)
-
-    print("option_list:")
+    # option_list = parser.gen_option_list(section_name) # defaults to bash
+    option_list = parser.gen_option_list(section_name, generator="bash")
+    # pprint(option_list)
+    print("Bash Output")
+    print("-----------")
     print( " \\\n    ".join(option_list) )
+
+    # generate CMake fragment
+    option_list = parser.gen_option_list(section_name, generator="cmake_fragment")
+    print("")
+    print("CMake Fragment")
+    print("--------------")
+    print("\n".join(option_list))
+    #pprint(option_list)
+    print("")
+
 
     return 0
 
@@ -81,11 +93,12 @@ def parse_section(parser, section):
     pprint(data, width=120)
 
     # Print the loginfo from the last search
-    print("\nLogInfo")
-    print("=======")
-    #parser._loginfo_print(pretty=True)
-    handler_list = [ (d['type'], d['name']) for d in parser._loginfo if d['type'] in ['handler-entry','handler-exit']]
-    pprint(handler_list, width=120)
+    if(False):
+        print("\nLogInfo")
+        print("=======")
+        #parser._loginfo_print(pretty=True)
+        handler_list = [ (d['type'], d['name']) for d in parser._loginfo if d['type'] in ['handler-entry','handler-exit']]
+        pprint(handler_list, width=120)
 
     return data
 

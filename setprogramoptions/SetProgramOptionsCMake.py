@@ -47,7 +47,14 @@ from .SetProgramOptions import SetProgramOptions
 
 
 class SetProgramOptionsCMake(SetProgramOptions):
-    """
+    """Extends SetProgramOptions to add in CMake option support.
+
+    - Adds a new **.ini** file command: ``opt-set-cmake-cache``
+      which can have the format: ``opt-set-cmake-cache VARNAME [TYPE] : VALUE``
+    - Adds a new back-end generator for ``cmake_fragment``
+      files for the ``gen_option_list`` method.
+
+
     Todo:
         Add docstrings to functions and handlers.
 
@@ -75,29 +82,47 @@ class SetProgramOptionsCMake(SetProgramOptions):
     #   H A N D L E R S  -  P R O G R A M   O P T I O N S
     # ---------------------------------------------------------------
 
+    def _program_option_handler_opt_set_cmake_fragment(self, params: list, value: str) -> str:
+        """
+        **cmake fragment** line-item handler for ``opt-set`` entries.
+        Sine we don't care about that for a CMake fragment this can be a noop.
 
-    def _program_option_handler_opt_set_cmake_cache_fragment(self,
-                                                             params: list,
-                                                             value: str) -> str:
+        Including this function prevents an ``exception_control_event`` WARNING
+        from being generated in ``SetProgramOptions``.
+
+        Args:
+            params (list): The list of parameter entries extracted from the
+                .ini line item.
+            value (str): The value portion from the .ini line item.
+
+        Returns:
+            None
         """
+        return None
+
+
+    def _program_option_handler_opt_set_cmake_cache_cmake_fragment(self,
+                                                                  params: list,
+                                                                  value: str) -> str:
         """
-        output = None
-        raise NotImplementedError("TODO")
-        # This should kick off generation of the CMake cache line. Input is the
-        # params list and the value string.
-        # Name is kind of long - but it's also generated:
-        #     _program_option_handler_<type_name>_<generator>()
-        #  where:
-        #     type_name = `opt_set`
-        #     generator = `cmake_cache_fragment`
+        **cmake fragment** line-item generator for ``opt-set-cmake-cache`` entries when
+        the *generator* is set to ``cmake_fragment``.
+        """
+        params = params[1:]
+        params.insert(1, value)
+        params.append( "CACHE" )
+        output = "set({})".format(" ".join(params))
         return output
 
 
     def _program_option_handler_opt_set_cmake_cache_bash(self, params, value) -> str:
         """
+        **bash** line-item generator for ``opt-set-cmake-cache`` entries when
+        the *generator* is set to ``bash``.
         """
+        if len(params) >= 3:
+            params[2] = ":" + params[2]
         return self._generic_program_option_handler_bash(params,value)
-
 
     # ---------------------------------------------------------------
     #   H A N D L E R S  -  C O N F I G P A R S E R E N H A N C E D
@@ -132,7 +157,7 @@ class SetProgramOptionsCMake(SetProgramOptions):
 
         # prepend the ":" to the TYPE specifier if we have one.
         if len(params) == 2 and params[1] is not None:
-            params[1] = ":" + str(params[1])
+            params[1] = str(params[1])
 
         # prepend the "-D" argument to the params list.
         params = ["-D"] + params
@@ -140,7 +165,6 @@ class SetProgramOptionsCMake(SetProgramOptions):
         entry = {'type': [op], 'value': value, 'params': params }
 
         data_shared_ref.append(entry)
-
         # -----[ Handler Content End ]---------------------
 
         self.exit_handler(handler_parameters)

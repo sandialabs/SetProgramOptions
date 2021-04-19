@@ -26,6 +26,7 @@ try:                  # pragma: no cover
 except ImportError:   # pragma: no cover
     pass
 
+import copy
 from pathlib import Path
 from pprint import pprint
 import shlex
@@ -100,6 +101,9 @@ class SetProgramOptions(ConfigParserEnhanced):
         Returns:
             list: A ``list`` containing the processed options text.
         """
+        self._validate_parameter(section, (str))
+        self._validate_parameter(generator, (str))
+
         output = []
 
         if section not in self.options.keys():
@@ -111,7 +115,8 @@ class SetProgramOptions(ConfigParserEnhanced):
             gen_method_name = "_gen_option_entry"
             (method_name,method_ref) = self._locate_class_method(gen_method_name)
             line = method_ref(option_entry, generator)
-            output.append(line)
+            if line is not None:
+                output.append(line)
 
         return output
 
@@ -126,6 +131,12 @@ class SetProgramOptions(ConfigParserEnhanced):
         Takes an ``option_entry`` and looks for a specialized handler
         for that option **type**.
 
+        This looks for a method named ``_program_option_handler_<typename>_<generator>``
+        where ``typename`` comes from the ``option_entry['type']`` field. For example,
+        if ``option_entry['type']`` is ``opt_set`` and ``generator`` is ``bash`` then
+        we look for a method called ``_program_option_handler_opt_set_bash``, which
+        is executed and returns the line-item entry for the given ``option_entry``.
+
         Args:
             option_entry (dict): A dictionary storing a single *option* entry.
 
@@ -136,6 +147,9 @@ class SetProgramOptions(ConfigParserEnhanced):
             ValueError: A ``ValueError`` is raised if we aren't able to locate
                 the options formatter.
         """
+        self._validate_parameter(option_entry, (dict))
+        self._validate_parameter(generator, (str))
+
         output = None
 
         method_name = None
@@ -143,8 +157,8 @@ class SetProgramOptions(ConfigParserEnhanced):
 
         method_name_list = []
 
-        # Look for a matching method in the list of 'types' that this operation
-        # could map to.
+        # Look for a matching method in the list of 'types' that
+        # this operation can map to.
         for typename in option_entry['type']:
             method_name = "_".join(["_program_option_handler", str(typename), generator])
             (method_name, method_ref) = self._locate_class_method(method_name)
@@ -156,12 +170,13 @@ class SetProgramOptions(ConfigParserEnhanced):
             message = ["ERROR: Unable to locate an option formatter named:"]
             for method_name in method_name_list:
                 message.append("- `{}()`".format(method_name))
-            self.exception_control_event("CATASTROPHIC", ValueError, "\n".join(message))
+            self.exception_control_event("WARNING", ValueError, "\n".join(message))
 
         # Found a match.
-        params = option_entry['params']
-        value  = option_entry['value']
-        output = method_ref(params, value)
+        if method_ref is not None:
+            params = copy.deepcopy(option_entry['params'])
+            value  = copy.deepcopy(option_entry['value'])
+            output = method_ref(params, value)
 
         return output
 

@@ -262,7 +262,7 @@ class SetProgramOptionsTest(TestCase):
         print("Load file: {}".format(self._filename))
         parser = SetProgramOptions(self._filename)
         parser.debug_level = 5
-        parser.exception_control_level = 4
+        parser.exception_control_level = 5
         parser.exception_control_compact_warnings = False
 
         print("-----[ TEST BEGIN ]----------------------------------------")
