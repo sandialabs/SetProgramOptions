@@ -67,8 +67,39 @@ class SetProgramOptions(ConfigParserEnhanced):
 
 
     @property
-    def options(self) -> list:
+    def options(self) -> dict:
         """
+        The ``options`` property contains the set of parsed options that has
+        been processed so far stored as a dictionary. For example, the following
+        .ini snippet:
+
+        .. code-block:: ini
+            :linenos:
+
+            [SECTION_A]
+            opt-set cmake
+            opt-set -G : Ninja
+
+        might generate the folllowing result in ``options``:
+
+            >>> parser.options
+            {'SECTION_A':
+                [
+                    {'type': ['opt_set'], 'params': ['cmake'], 'value': None },
+                    {'type': ['opt_set'], 'params': ['-G'], 'value': 'Ninja' }
+                ]
+            }
+
+        would encode the reults of a ``.ini`` file *section* "SECTION_A" which
+        encoded the command: ``cmake -G Ninja``.
+
+        This data is used by the ``gen_option_list`` method to generate snippets
+        according to the requested generator, such as "bash" or "cmake_fragment".
+
+        Raises:
+            TypeError: A TypeError can be raised if a non-dictionary is assigned
+                to this property.
+
         """
         if not hasattr(self, '_property_options'):
             self._property_options = {}
@@ -89,6 +120,49 @@ class SetProgramOptions(ConfigParserEnhanced):
 
     def gen_option_list(self, section, generator='bash') -> list:
         """Generate a list of options for a section.
+
+        Generates a list of strings that captures the requested
+        operation based on the entries in the .ini file that is
+        stored in ``options`` during parsing.
+
+        The ``bash`` generator will generate a set of 'bash' like
+        entries that could be concactenated to generate a bash command.
+
+        For  example, the .ini section:
+
+        .. code-block:: ini
+            :linenos:
+
+            [SECTION_A]
+            opt-set cmake
+            opt-set -G : Ninja
+            opt-set /path/to/source/dir
+
+        will generate this output:
+
+            >>> option_list = parser.gen_option_list("SECTION_A", "bash")
+            >>> option_list
+                [
+                    'cmake',
+                    '-G=Ninja',
+                    '/path/to/source/dir'
+                ]
+
+        Which can be joined easily to create a bash instruction, such as:
+
+            >>> " ".join(option_list)
+            cmake -G=Ninja
+
+        or we could generate a multi-line bash command with continuation
+        lines like this:
+
+            >>> " \\\\\\n    ".join(option_list)
+            cmake \\
+                -G=Ninja \\
+                /path/to/source/dir
+
+        This can then be executed in a bash shell or saved to a script file that could
+        be executed separately.
 
         Args:
             section (str): The section name that contains the options
@@ -142,6 +216,9 @@ class SetProgramOptions(ConfigParserEnhanced):
 
         Returns:
             str: A string containing the single entry for this option.
+            None: Can also return ``NoneType`` IF the ``type`` field in ``option_entry``
+                  does not resolve to a proper method and the *exception control level*
+                  is not set sufficiently high to trigger an exception.
 
         Raises:
             ValueError: A ``ValueError`` is raised if we aren't able to locate
@@ -166,11 +243,11 @@ class SetProgramOptions(ConfigParserEnhanced):
                 break
             method_name_list.append(method_name)
         else:
-            # the for did _not_ exit via the break
+            # The for did _not_ exit via the break...
             message = ["ERROR: Unable to locate an option formatter named:"]
             for method_name in method_name_list:
                 message.append("- `{}()`".format(method_name))
-            self.exception_control_event("WARNING", ValueError, "\n".join(message))
+            self.exception_control_event("SILENT", ValueError, "\n".join(message))
 
         # Found a match.
         if method_ref is not None:

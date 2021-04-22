@@ -19,5 +19,8 @@ Public Methods
    :undoc-members:
    :show-inheritance:
    :special-members: __init__
+   :exclude-members:
+      handler_finalize,
+      handler_initialize
 
 

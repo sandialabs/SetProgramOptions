@@ -298,7 +298,6 @@ class SetProgramOptionsTest(TestCase):
         with self.assertRaises(IndexError):
             data = parser.parse_section(section)
 
-
         print("-----[ TEST END ]------------------------------------------")
 
         print("OK")
@@ -321,7 +320,6 @@ class SetProgramOptionsTest(TestCase):
         print("-----[ TEST BEGIN ]----------------------------------------")
         section = "TEST_OPTION_REMOVAL_VARIABLES"
         print("Section  : {}".format(section))
-
 
         handler_parameters = HandlerParameters.HandlerParameters()
         handler_parameters.data_internal['processed_sections'] = set()
@@ -448,6 +446,37 @@ class SetProgramOptionsTest(TestCase):
         return 0
 
 
+    def test_SetProgramOptions_method__gen_option_entry_method_not_found(self):
+        """
+        Test ``_gen_option_entry`` when the app can't locate a suitable
+        line generator method and ``exception_control_level`` is less than
+        5, thus ensuring the ``exception_control_event`` triggers a "SILENT"
+        event that won't be raised.
+        """
+        print("\n")
+        print("Load file: {}".format(self._filename))
+        parser = SetProgramOptions(self._filename)
+        parser.debug_level = 5
+        parser.exception_control_level = 4
+        parser.exception_control_compact_warnings = False
+
+        print("-----[ TEST BEGIN ]----------------------------------------")
+        section = "TEST_OPTION_REMOVAL_VARIABLES"
+        print("Section  : {}".format(section))
+
+        option_entry = {'type': ['nonexistent_command'],
+                        'value': None,
+                        'params': ['cmake']
+                        }
+
+        output_expected = None
+        output_actual = parser._gen_option_entry(option_entry, generator="bash")
+        self.assertEqual(output_expected, output_actual)
+
+        print("-----[ TEST END ]------------------------------------------")
+
+        print("OK")
+        return 0
 
 
 

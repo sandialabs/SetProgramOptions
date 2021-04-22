@@ -11,6 +11,7 @@ Welcome to SetProgramOptions documentation!
    :caption: Contents:
 
    SetProgramOptions
+   SetProgramOptionsCMake
 
 
 

@@ -83,7 +83,6 @@ class SetProgramOptionsTestCMake(TestCase):
         self.unit_test_file = os.path.basename(unit_test_path)
         self.unit_test_path = os.path.dirname(unit_test_path)
 
-
     def test_SetProgramOptionsCMake_Template(self):
         """
         Basic template test for SetProgramOptions.
@@ -123,7 +122,6 @@ class SetProgramOptionsTestCMake(TestCase):
         print("OK")
         return
 
-
     def test_SetProgramOptionsCMake_property_inifilepath(self):
         """
         Runs a check that loads the filename using `inifilepath` property
@@ -151,12 +149,9 @@ class SetProgramOptionsTestCMake(TestCase):
         print("OK")
         return
 
-
-    def test_SetProgramOptionsCMake_gen_option_list(self):
+    def test_SetProgramOptionsCMake_gen_option_list_bash(self):
         """
-        Basic template test for SetProgramOptions.
-
-        This test doesn't really validate any output -- it just runs a basic check.
+        Test the ``gen_option_list`` method using the ``bash`` generator.
         """
         print("\n")
         print("Load file: {}".format(self._filename))
@@ -202,13 +197,67 @@ class SetProgramOptionsTestCMake(TestCase):
                               '-DKokkosKernels_ENABLE_EXAMPLES:BOOL=ON',
                               '-DTrilinos_ENABLE_Tpetra:BOOL=ON',
                               '-DTpetra_INST_DOUBLE:BOOL=ON',
-                              '/path/to/build/dir']
+                              '/path/to/source/dir']
 
-        option_list_actual = parser.gen_option_list(section)
+        option_list_actual = parser.gen_option_list(section, generator="bash")
         pprint(option_list_actual, width=200)
         self.assertListEqual(option_list_expect, option_list_actual)
-
         print("-----[ TEST END ]------------------------------------------")
 
         print("OK")
-        return
+        return 0
+
+    def test_SetProgramOptionsCMake_gen_option_list_cmake_fragment(self):
+        """
+        Test the ``gen_option_list`` method using the ``cmake_fragment`` generator.
+        """
+        print("\n")
+        print("Load file: {}".format(self._filename))
+        parser = SetProgramOptionsCMake(self._filename)
+        parser.debug_level = 5
+        parser.exception_control_level = 4
+        parser.exception_control_compact_warnings = False
+
+        print("-----[ TEST BEGIN ]----------------------------------------")
+        section = "TRILINOS_CONFIGURATION_ALPHA"
+        print("Section  : {}".format(section))
+
+        # parse a section
+        print("-" * 40)
+        print("Execute Parser")
+        print("-" * 40)
+        data = parser.parse_section(section)
+
+        # pretty print the output
+        print("-" * 40)
+        print("Data")
+        print("-" * 40)
+        pprint(data, width=120)
+
+        # pretty print the loginfo
+        print("-" * 40)
+        print("LogInfo")
+        print("-" * 40)
+        parser._loginfo_print()
+
+        print("-" * 40)
+        print("Option List")
+        print("-" * 40)
+        option_list_expect = ['set(Trilinos_ENABLE_COMPLEX ON BOOL CACHE)',
+                              'set(Trilinos_ENABLE_THREAD_SAFE ON BOOL CACHE)',
+                              'set(Trilinos_PARALLEL_COMPILE_JOBS_LIMIT 20 CACHE)',
+                              'set(Trilinos_PARALLEL_LINK_JOBS_LIMIT 4 CACHE)',
+                              'set(Trilinos_ENABLE_Kokkos ON BOOL CACHE)',
+                              'set(Trilinos_ENABLE_KokkosCore ON BOOL CACHE)',
+                              'set(Trilinos_ENABLE_KokkosKernels ON BOOL CACHE)',
+                              'set(KokkosKernels_ENABLE_EXAMPLES ON BOOL CACHE)',
+                              'set(Trilinos_ENABLE_Tpetra ON BOOL CACHE)',
+                              'set(Tpetra_INST_DOUBLE ON BOOL CACHE)']
+
+        option_list_actual = parser.gen_option_list(section, generator="cmake_fragment")
+        pprint(option_list_actual, width=200)
+        self.assertListEqual(option_list_expect, option_list_actual)
+        print("-----[ TEST END ]------------------------------------------")
+
+        print("OK")
+        return 0

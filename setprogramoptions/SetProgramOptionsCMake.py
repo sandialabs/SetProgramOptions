@@ -90,6 +90,13 @@ class SetProgramOptionsCMake(SetProgramOptions):
         Including this function prevents an ``exception_control_event`` WARNING
         from being generated in ``SetProgramOptions``.
 
+        Todo:
+            Should we just remove this method entirely? The code in ``SetProgramOptions``
+            that would look for this function would trigger a SILENT event if we set
+            ECL to 5 (i.e., raise exception for ALL events) but otherwise it's silent
+            and won't even print out a warning... The result is the same, both callers
+            get ``None`` as a return value.
+
         Args:
             params (list): The list of parameter entries extracted from the
                 .ini line item.
