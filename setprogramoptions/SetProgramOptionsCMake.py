@@ -1,15 +1,33 @@
 #!/usr/bin/env python3
 # -*- mode: python; py-indent-offset: 4; py-continuation-offset: 4 -*-
 """
-SetProgramOptions
+``SetProgramOptionsCMake`` is a subclass of the ``SetProgramOptions``
+that adds CMake-specific handlers for the following .ini file operations:
 
-Todo:
-    Fill in the docstring for this file.
+Operation: ``opt-set-cmake-cache``
+----------------------------------
+The ``opt-set-cmake-cache`` operation can have the following format:
+
+.. code-block:: bash
+   :linenos:
+
+   opt-set-cmake-cache <varname> [<type>] [FORCE] [PARENT_SCOPE] : <value>
+
+This command can result in a generated **bash** output that might look like:
+``-DVAR_NAME:BOOL=ON`` using the ``SetProgramOptions`` method ``gen_option_list``
+with the ``bash`` generator.
+
+In the case of bash command entries the ``FORCE`` and ``PARENT_SCOPE`` optional
+parameters are ignored.
+
+See CMake documentation on the `set() <https://cmake.org/cmake/help/latest/command/set.html>`_
+command for more information on how fragment file entries are generated.
+
+We do not support the *environment variable* variation of ``set()`` at this time.
+
 
 :Authors:
     - William C. McLendon III <wcmclen@sandia.gov>
-
-:Version: 0.0.0
 """
 from __future__ import print_function
 
@@ -112,20 +130,20 @@ class SetProgramOptionsCMake(SetProgramOptions):
         return None
 
 
-    def _program_option_handler_opt_set_cmake_cache_cmake_fragment(self,
-                                                                  params: list,
-                                                                  value: str) -> str:
+    def _program_option_handler_opt_set_cmake_cache_cmake_fragment(self, params: list, value: str) -> str:
         """
         **cmake fragment** line-item generator for ``opt-set-cmake-cache`` entries when
-        the *generator* is set to ``cmake_fragment``.
+        the *generator* requests a ``cmake_fragment`` entry.
 
-        This method prepares a ``set(<variable> <value> [CACHE <type> <docstring>])`` entry
+        The generated output for this command should be valid according to
+        the CMake `set() <https://cmake.org/cmake/help/latest/command/set.html>`_ command.
 
-        Valid formats for a ``set`` command are:
+        Valid formats for the CMake ``set()`` command are:
 
-        - ``set(<variable> <value>)``
-        - ``set(<variable> <value> CACHE <type> <docstring>)``
+        - ``set(<variable> <value> [FORCE] [PARENT_SCOPE])``
+        - ``set(<variable> <value> CACHE <type> <docstring> [FORCE] [PARENT_SCOPE])``
 
+        We do *not* support the ``set(ENV{<variable>} [<value>])`` variant.
 
         Note:
             It's ok to modify ``params`` and ``value`` here without concern of
@@ -133,12 +151,23 @@ class SetProgramOptionsCMake(SetProgramOptions):
             performs a deep-copy of these parameters prior to calling this.
             Any changes we make are ephemeral.
         """
-        params.insert(1, value)
-        if len(params) > 2:
-            params.insert(2, "CACHE")
-            params.append('""')
+        varname    = params[0]
+        params     = params[1:4]
+        param_opts = self._helper_cmake_set_entry_parser(params)
+
+        params = [varname, value]
+
+        if param_opts["TYPE"] is not None:
+            params.append("CACHE")
+            params.append(param_opts["TYPE"])
+            params.append('"from .ini configuration"')
+        if param_opts['PARENT_SCOPE']:
+            params.append("PARENT_SCOPE")
+        if param_opts['FORCE']:
+            params.append("FORCE")
 
         output = "set({})".format(" ".join(params))
+
         return output
 
 
@@ -153,10 +182,17 @@ class SetProgramOptionsCMake(SetProgramOptions):
             performs a deep-copy of these parameters prior to calling this.
             Any changes we make are ephemeral.
         """
-        params = ["-D"] + params
-        if len(params) >= 3:
-            params[2] = ":" + params[2]
+        varname = params[0]
+        params  = params[1:4]
+
+        param_opts = self._helper_cmake_set_entry_parser(params)
+
+        params = ["-D", varname]
+        if param_opts['TYPE'] is not None:
+            params.append(":" + param_opts['TYPE'])
+
         return self._generic_program_option_handler_bash(params, value)
+
 
 
     # ---------------------------------------------------------------
@@ -187,10 +223,21 @@ class SetProgramOptionsCMake(SetProgramOptions):
         value  = handler_parameters.value
         params = handler_parameters.params
 
-        # Toss out any extra 'params'
-        params = params[:2]
+        # Varname for CMake set() operations is the first param
+#        varname = params[0]
 
-        entry = {'type': [op], 'value': value, 'params': params }
+        # Slice the array
+#        params = params[1:4]
+
+        # Process params to get param options.
+#        param_opts = self._helper_cmake_set_entry_parser(params)
+
+        entry = {'type'    : [op],
+                 'value'   : value,
+                 'params'  : params
+#                 'varname' : varname,
+#                 'options' : param_opts
+                }
 
         data_shared_ref.append(entry)
         # -----[ Handler Content End ]---------------------
@@ -207,5 +254,37 @@ class SetProgramOptionsCMake(SetProgramOptions):
     # -----------------------
     #   H E L P E R S
     # -----------------------
+
+
+    def _helper_cmake_set_entry_parser(self, params: list):
+        """
+        Processes the list of parameters to detect the existence of
+        flags for variables. This is consumed when generating option lists
+        because the relevance of some options depends on the back-end
+        generator. For example, "PARENT_SCOPE" is relevant to a ``cmake_fragment``
+        generator but does not get used for a ``bash`` option that would be
+        provided to the ``camke`` application on the command line.
+
+        Args:
+            params (list): The list of parameters pulled out of the .ini
+                file entry.
+
+        Returns:
+            dict: A ``dictinary`` object that captures the existence or
+                omission of flags that are applicable to a CMake Cache
+                variable operation.
+        """
+        output = {'FORCE': False,
+                  'PARENT_SCOPE': False,
+                  'TYPE': None}
+        for option in params[:4]:
+            if option == "FORCE":
+                output['FORCE'] = True
+            elif option == "PARENT_SCOPE":
+                output['PARENT_SCOPE'] = True
+            elif option in ["BOOL", "FILEPATH", "PATH", "STRING", "INTERVAL"]:
+                output['TYPE'] = option
+
+        return output
 
 

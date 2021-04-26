@@ -54,6 +54,7 @@ def test_setprogramoptions(filename="config.ini"):
     #section_name = "TEST_CONFIGURATION_A"
     section_name = "TEST_CONFIGURATION_D"
     section_name = "TRILINOS_CONFIGURATION_ALPHA"
+    section_name = "TEST_CMAKE_CACHE_PARAM_ORDER"
 
     parse_section(parser, section_name)
 

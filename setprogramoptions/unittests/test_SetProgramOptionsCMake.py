@@ -83,6 +83,7 @@ class SetProgramOptionsTestCMake(TestCase):
         self.unit_test_file = os.path.basename(unit_test_path)
         self.unit_test_path = os.path.dirname(unit_test_path)
 
+
     def test_SetProgramOptionsCMake_Template(self):
         """
         Basic template test for SetProgramOptions.
@@ -120,7 +121,8 @@ class SetProgramOptionsTestCMake(TestCase):
         print("-----[ TEST END ]------------------------------------------")
 
         print("OK")
-        return
+        return 0
+
 
     def test_SetProgramOptionsCMake_property_inifilepath(self):
         """
@@ -147,7 +149,8 @@ class SetProgramOptionsTestCMake(TestCase):
         print("-----[ TEST END ]------------------------------------------")
 
         print("OK")
-        return
+        return 0
+
 
     def test_SetProgramOptionsCMake_gen_option_list_bash(self):
         """
@@ -207,6 +210,7 @@ class SetProgramOptionsTestCMake(TestCase):
         print("OK")
         return 0
 
+
     def test_SetProgramOptionsCMake_gen_option_list_cmake_fragment(self):
         """
         Test the ``gen_option_list`` method using the ``cmake_fragment`` generator.
@@ -243,16 +247,18 @@ class SetProgramOptionsTestCMake(TestCase):
         print("-" * 40)
         print("Option List")
         print("-" * 40)
-        option_list_expect = ['set(Trilinos_ENABLE_COMPLEX ON BOOL CACHE)',
-                              'set(Trilinos_ENABLE_THREAD_SAFE ON BOOL CACHE)',
-                              'set(Trilinos_PARALLEL_COMPILE_JOBS_LIMIT 20 CACHE)',
-                              'set(Trilinos_PARALLEL_LINK_JOBS_LIMIT 4 CACHE)',
-                              'set(Trilinos_ENABLE_Kokkos ON BOOL CACHE)',
-                              'set(Trilinos_ENABLE_KokkosCore ON BOOL CACHE)',
-                              'set(Trilinos_ENABLE_KokkosKernels ON BOOL CACHE)',
-                              'set(KokkosKernels_ENABLE_EXAMPLES ON BOOL CACHE)',
-                              'set(Trilinos_ENABLE_Tpetra ON BOOL CACHE)',
-                              'set(Tpetra_INST_DOUBLE ON BOOL CACHE)']
+        option_list_expect = [
+            'set(Trilinos_ENABLE_COMPLEX ON CACHE BOOL "from .ini configuration")',
+            'set(Trilinos_ENABLE_THREAD_SAFE ON CACHE BOOL "from .ini configuration")',
+            'set(Trilinos_PARALLEL_COMPILE_JOBS_LIMIT 20)',
+            'set(Trilinos_PARALLEL_LINK_JOBS_LIMIT 4)',
+            'set(Trilinos_ENABLE_Kokkos ON CACHE BOOL "from .ini configuration")',
+            'set(Trilinos_ENABLE_KokkosCore ON CACHE BOOL "from .ini configuration")',
+            'set(Trilinos_ENABLE_KokkosKernels ON CACHE BOOL "from .ini configuration")',
+            'set(KokkosKernels_ENABLE_EXAMPLES ON CACHE BOOL "from .ini configuration")',
+            'set(Trilinos_ENABLE_Tpetra ON CACHE BOOL "from .ini configuration")',
+            'set(Tpetra_INST_DOUBLE ON CACHE BOOL "from .ini configuration")'
+        ]
 
         option_list_actual = parser.gen_option_list(section, generator="cmake_fragment")
         pprint(option_list_actual, width=200)
@@ -261,3 +267,130 @@ class SetProgramOptionsTestCMake(TestCase):
 
         print("OK")
         return 0
+
+
+    def test_SetProgramOptionsCMake_param_order_01(self):
+        """
+        """
+        print("\n")
+        print("Load file: {}".format(self._filename))
+        parser = SetProgramOptionsCMake(self._filename)
+        parser.debug_level = 5
+        parser.exception_control_level = 4
+        parser.exception_control_compact_warnings = False
+
+        print("-----[ TEST BEGIN ]----------------------------------------")
+        section = "TEST_CMAKE_CACHE_PARAM_ORDER"
+        print("Section  : {}".format(section))
+
+        # parse a section
+        print("-" * 40)
+        print("Execute Parser")
+        print("-" * 40)
+        data = parser.parse_section(section)
+
+        # pretty print the output
+        print("-" * 40)
+        print("Data")
+        print("-" * 40)
+        pprint(data, width=120)
+
+        # pretty print the loginfo
+        print("-" * 40)
+        print("LogInfo")
+        print("-" * 40)
+        parser._loginfo_print()
+
+        option_list_bash_expect = [
+            '-DCMAKE_VAR_A=ON',
+            '-DCMAKE_VAR_B=ON',
+            '-DCMAKE_VAR_C:BOOL=ON',
+            '-DCMAKE_VAR_D=ON',
+            '-DCMAKE_VAR_E=ON',
+            '-DCMAKE_VAR_F:BOOL=ON',
+            '-DCMAKE_VAR_G:BOOL=ON',
+            '-DCMAKE_VAR_H:BOOL=ON',
+            '-DCMAKE_VAR_I:BOOL=ON',
+            '-DCMAKE_VAR_J:BOOL=ON',
+            '-DCMAKE_VAR_K:BOOL=ON',
+            '-DCMAKE_VAR_L:BOOL=ON',
+            '-DCMAKE_VAR_M:BOOL=ON',
+            '-DCMAKE_VAR_N:BOOL=ON',
+            '-DCMAKE_VAR_O:BOOL=ON'
+            ]
+
+        option_list_bash_actual = parser.gen_option_list(section, generator="bash")
+        self.assertListEqual(option_list_bash_expect, option_list_bash_actual)
+
+        option_list_cmake_fragment_expect = [
+            'set(CMAKE_VAR_A ON FORCE)',
+            'set(CMAKE_VAR_B ON PARENT_SCOPE)',
+            'set(CMAKE_VAR_C ON CACHE BOOL "from .ini configuration")',
+            'set(CMAKE_VAR_D ON PARENT_SCOPE FORCE)',
+            'set(CMAKE_VAR_E ON PARENT_SCOPE FORCE)',
+            'set(CMAKE_VAR_F ON CACHE BOOL "from .ini configuration" FORCE)',
+            'set(CMAKE_VAR_G ON CACHE BOOL "from .ini configuration" FORCE)',
+            'set(CMAKE_VAR_H ON CACHE BOOL "from .ini configuration" PARENT_SCOPE)',
+            'set(CMAKE_VAR_I ON CACHE BOOL "from .ini configuration" PARENT_SCOPE)',
+            'set(CMAKE_VAR_J ON CACHE BOOL "from .ini configuration" PARENT_SCOPE FORCE)',
+            'set(CMAKE_VAR_K ON CACHE BOOL "from .ini configuration" PARENT_SCOPE FORCE)',
+            'set(CMAKE_VAR_L ON CACHE BOOL "from .ini configuration" PARENT_SCOPE FORCE)',
+            'set(CMAKE_VAR_M ON CACHE BOOL "from .ini configuration" PARENT_SCOPE FORCE)',
+            'set(CMAKE_VAR_N ON CACHE BOOL "from .ini configuration" PARENT_SCOPE FORCE)',
+            'set(CMAKE_VAR_O ON CACHE BOOL "from .ini configuration" PARENT_SCOPE FORCE)'
+            ]
+
+        option_list_cmake_fragment_actual = parser.gen_option_list(section, generator="cmake_fragment")
+        self.assertListEqual(option_list_cmake_fragment_expect, option_list_cmake_fragment_actual)
+        print("-----[ TEST END ]------------------------------------------")
+
+        print("OK")
+        return
+
+
+    def test_SetProgramOptionsCMake_param_order_02(self):
+        """
+        """
+        print("\n")
+        print("Load file: {}".format(self._filename))
+        parser = SetProgramOptionsCMake(self._filename)
+        parser.debug_level = 5
+        parser.exception_control_level = 4
+        parser.exception_control_compact_warnings = False
+
+        print("-----[ TEST BEGIN ]----------------------------------------")
+        section = "TEST_CMAKE_CACHE_PARAM_TEST_02"
+        print("Section  : {}".format(section))
+
+        # parse a section
+        print("-" * 40)
+        print("Execute Parser")
+        print("-" * 40)
+        data = parser.parse_section(section)
+
+        # pretty print the output
+        print("-" * 40)
+        print("Data")
+        print("-" * 40)
+        pprint(data, width=120)
+
+        # pretty print the loginfo
+        print("-" * 40)
+        print("LogInfo")
+        print("-" * 40)
+        parser._loginfo_print()
+
+        option_list_bash_expect = [
+            '-DCMAKE_VAR_A=ON'
+            ]
+
+        option_list_bash_actual = parser.gen_option_list(section, generator="bash")
+        self.assertListEqual(option_list_bash_expect, option_list_bash_actual)
+        print("-----[ TEST END ]------------------------------------------")
+
+        print("OK")
+        return
+
+
+
+# TEST_CMAKE_CACHE_PARAM_TEST_02

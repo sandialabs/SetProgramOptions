@@ -1,15 +1,8 @@
 #!/usr/bin/env python3
 # -*- mode: python; py-indent-offset: 4; py-continuation-offset: 4 -*-
 """
-SetProgramOptions
-
-Todo:
-    Fill in the docstring for this file.
-
 :Authors:
     - William C. McLendon III <wcmclen@sandia.gov>
-
-:Version: 0.0.0
 """
 from __future__ import print_function
 
