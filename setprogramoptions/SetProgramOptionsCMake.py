@@ -82,6 +82,7 @@ class SetProgramOptionsCMake(SetProgramOptions):
     #   H A N D L E R S  -  P R O G R A M   O P T I O N S
     # ---------------------------------------------------------------
 
+
     def _program_option_handler_opt_set_cmake_fragment(self, params: list, value: str) -> str:
         """
         **cmake fragment** line-item handler for ``opt-set`` entries.
@@ -90,12 +91,15 @@ class SetProgramOptionsCMake(SetProgramOptions):
         Including this function prevents an ``exception_control_event`` WARNING
         from being generated in ``SetProgramOptions``.
 
-        Todo:
-            Should we just remove this method entirely? The code in ``SetProgramOptions``
-            that would look for this function would trigger a SILENT event if we set
-            ECL to 5 (i.e., raise exception for ALL events) but otherwise it's silent
-            and won't even print out a warning... The result is the same, both callers
-            get ``None`` as a return value.
+        This method is essentially a noop but we can keep it in case someone ever
+        turns ``exception_control_level`` to max. This is because if this function
+        isn't defined a "SILENT" ``exception_control_event`` will get tripped in
+        ``SetProgramOptions``. Normally this would just pass on by but since SILENT
+        events are treated as WARNINGS with respect to raising an exception, removing
+        this would trigger an exception when ecl is 5.
+
+        That said, keeping this method around could still be seen as *optional* in
+        that removing it will not affect application behaviour under *normal* use.
 
         Args:
             params (list): The list of parameter entries extracted from the
@@ -114,10 +118,26 @@ class SetProgramOptionsCMake(SetProgramOptions):
         """
         **cmake fragment** line-item generator for ``opt-set-cmake-cache`` entries when
         the *generator* is set to ``cmake_fragment``.
+
+        This method prepares a ``set(<variable> <value> [CACHE <type> <docstring>])`` entry
+
+        Valid formats for a ``set`` command are:
+
+        - ``set(<variable> <value>)``
+        - ``set(<variable> <value> CACHE <type> <docstring>)``
+
+
+        Note:
+            It's ok to modify ``params`` and ``value`` here without concern of
+            side-effects since ``_gen_option_entry()`` in ``SetProgramOptions``
+            performs a deep-copy of these parameters prior to calling this.
+            Any changes we make are ephemeral.
         """
-        params = params[1:]
         params.insert(1, value)
-        params.append( "CACHE" )
+        if len(params) > 2:
+            params.insert(2, "CACHE")
+            params.append('""')
+
         output = "set({})".format(" ".join(params))
         return output
 
@@ -126,10 +146,18 @@ class SetProgramOptionsCMake(SetProgramOptions):
         """
         **bash** line-item generator for ``opt-set-cmake-cache`` entries when
         the *generator* is set to ``bash``.
+
+        Note:
+            It's ok to modify ``params`` and ``value`` here without concern of
+            side-effects since ``_gen_option_entry()`` in ``SetProgramOptions``
+            performs a deep-copy of these parameters prior to calling this.
+            Any changes we make are ephemeral.
         """
+        params = ["-D"] + params
         if len(params) >= 3:
             params[2] = ":" + params[2]
-        return self._generic_program_option_handler_bash(params,value)
+        return self._generic_program_option_handler_bash(params, value)
+
 
     # ---------------------------------------------------------------
     #   H A N D L E R S  -  C O N F I G P A R S E R E N H A N C E D
@@ -159,15 +187,8 @@ class SetProgramOptionsCMake(SetProgramOptions):
         value  = handler_parameters.value
         params = handler_parameters.params
 
-        # Toss out extra 'params'
+        # Toss out any extra 'params'
         params = params[:2]
-
-        # prepend the ":" to the TYPE specifier if we have one.
-        if len(params) == 2 and params[1] is not None:
-            params[1] = str(params[1])
-
-        # prepend the "-D" argument to the params list.
-        params = ["-D"] + params
 
         entry = {'type': [op], 'value': value, 'params': params }
 

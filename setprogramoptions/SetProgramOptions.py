@@ -438,7 +438,6 @@ class SetProgramOptions(ConfigParserEnhanced):
         entry = {'type': [op], 'value': value, 'params': params }
 
         data_shared_ref.append(entry)
-
         # -----[ Handler Content End ]---------------------
 
         self.exit_handler(handler_parameters)
