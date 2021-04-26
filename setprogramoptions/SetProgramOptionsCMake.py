@@ -4,14 +4,14 @@
 ``SetProgramOptionsCMake`` is a subclass of the ``SetProgramOptions``
 that adds CMake-specific handlers for the following .ini file operations:
 
-Operation: ``opt-set-cmake-cache``
+Operation: ``opt-set-cmake-var``
 ----------------------------------
-The ``opt-set-cmake-cache`` operation can have the following format:
+The ``opt-set-cmake-var`` operation can have the following format:
 
 .. code-block:: bash
    :linenos:
 
-   opt-set-cmake-cache <varname> [<type>] [FORCE] [PARENT_SCOPE] : <value>
+   opt-set-cmake-var <varname> [<type>] [FORCE] [PARENT_SCOPE] : <value>
 
 This command can result in a generated **bash** output that might look like:
 ``-DVAR_NAME:BOOL=ON`` using the ``SetProgramOptions`` method ``gen_option_list``
@@ -67,8 +67,8 @@ from .SetProgramOptions import SetProgramOptions
 class SetProgramOptionsCMake(SetProgramOptions):
     """Extends SetProgramOptions to add in CMake option support.
 
-    - Adds a new **.ini** file command: ``opt-set-cmake-cache``
-      which can have the format: ``opt-set-cmake-cache VARNAME [TYPE] : VALUE``
+    - Adds a new **.ini** file command: ``opt-set-cmake-var``
+      which can have the format: ``opt-set-cmake-var VARNAME [TYPE] : VALUE``
     - Adds a new back-end generator for ``cmake_fragment``
       files for the ``gen_option_list`` method.
 
@@ -130,9 +130,9 @@ class SetProgramOptionsCMake(SetProgramOptions):
         return None
 
 
-    def _program_option_handler_opt_set_cmake_cache_cmake_fragment(self, params: list, value: str) -> str:
+    def _program_option_handler_opt_set_cmake_var_cmake_fragment(self, params: list, value: str) -> str:
         """
-        **cmake fragment** line-item generator for ``opt-set-cmake-cache`` entries when
+        **cmake fragment** line-item generator for ``opt-set-cmake-var`` entries when
         the *generator* requests a ``cmake_fragment`` entry.
 
         The generated output for this command should be valid according to
@@ -171,9 +171,9 @@ class SetProgramOptionsCMake(SetProgramOptions):
         return output
 
 
-    def _program_option_handler_opt_set_cmake_cache_bash(self, params, value) -> str:
+    def _program_option_handler_opt_set_cmake_var_bash(self, params, value) -> str:
         """
-        **bash** line-item generator for ``opt-set-cmake-cache`` entries when
+        **bash** line-item generator for ``opt-set-cmake-var`` entries when
         the *generator* is set to ``bash``.
 
         Note:
@@ -200,8 +200,8 @@ class SetProgramOptionsCMake(SetProgramOptions):
     # ---------------------------------------------------------------
 
 
-    def _handler_opt_set_cmake_cache(self, section_name, handler_parameters) -> int:
-        """Handler for ``opt-set-cmake-cache``
+    def _handler_opt_set_cmake_var(self, section_name, handler_parameters) -> int:
+        """Handler for ``opt-set-cmake-var``
 
         Args:
             section_name (str): The name of the section being processed.

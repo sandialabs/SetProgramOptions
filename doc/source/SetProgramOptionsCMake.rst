@@ -25,9 +25,9 @@ Public Methods
 Private Methods
 +++++++++++++++
 .. automethod:: setprogramoptions.SetProgramOptionsCMake._program_option_handler_opt_set_cmake_fragment
-.. automethod:: setprogramoptions.SetProgramOptionsCMake._program_option_handler_opt_set_cmake_cache_cmake_fragment
-.. automethod:: setprogramoptions.SetProgramOptionsCMake._program_option_handler_opt_set_cmake_cache_bash
-.. automethod:: setprogramoptions.SetProgramOptionsCMake._handler_opt_set_cmake_cache
+.. automethod:: setprogramoptions.SetProgramOptionsCMake._program_option_handler_opt_set_cmake_var_cmake_fragment
+.. automethod:: setprogramoptions.SetProgramOptionsCMake._program_option_handler_opt_set_cmake_var_bash
+.. automethod:: setprogramoptions.SetProgramOptionsCMake._handler_opt_set_cmake_var
 .. automethod:: setprogramoptions.SetProgramOptionsCMake._helper_cmake_set_entry_parser
 
 
