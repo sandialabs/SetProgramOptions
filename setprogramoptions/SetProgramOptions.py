@@ -449,7 +449,7 @@ class SetProgramOptions(ConfigParserEnhanced):
         list, where ``{_data_shared_key}`` is generated from the property :py:attr:`_data_shared_key`.
         Currently, :py:attr:`_data_shared_key` returns the class name of the class object.
 
-        In this case the format can is based on the following .ini snippet:
+        In this case the format is based on the following .ini snippet:
 
         .. code-block:: ini
             :linenos:
@@ -457,7 +457,7 @@ class SetProgramOptions(ConfigParserEnhanced):
             [SECTION NAME]
             <operation> KEYWORD [SUBSTR]
 
-        where we remove entries from the *shared dta options* list according to one of the
+        where we remove entries from the *shared data options* list according to one of the
         following methods:
 
         1. Removes entries if one of the parameters matches the provided ``KEYWORD``.
@@ -507,7 +507,7 @@ class SetProgramOptions(ConfigParserEnhanced):
 
 
     def _option_handler_helper_add(self, section_name:str, handler_parameters) -> int:
-        """Add an option to the shared data otions list
+        """Add an option to the shared data options list
 
         Inserts an option into the ``handler_parameters.data_shared["{_data_shared_key}"]``
         list, where ``{_data_shared_key}`` is generated from the property :py:attr:`_data_shared_key`.
@@ -521,7 +521,7 @@ class SetProgramOptions(ConfigParserEnhanced):
             [SECTION NAME]
             operation Param1 Param2 ... ParamN : Value
 
-        which result in an ``dict`` entry:
+        which result in a ``dict`` entry:
 
         .. code-block:: python
             :linenos:
