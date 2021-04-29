@@ -1,6 +1,50 @@
 #!/usr/bin/env python3
 # -*- mode: python; py-indent-offset: 4; py-continuation-offset: 4 -*-
 """
+SetProgramOptions
+=================
+
+``SetProgramOptions`` is a subclass of ``ConfigParserEnhanced``
+that adds program-option handling capabilities.
+
+Operation: ``opt-set``
+++++++++++++++++++++++++++++++++
+The ``opt-set`` operation can have the following format:
+
+.. code-block:: bash
+   :linenos:
+
+   opt-set Param1 [Param2] ... [ParamN] : <value>
+
+Options are processed using :py:meth:`gen_option_list` to produce a
+``list`` or ``strings`` representing a command or set of command line
+options that can be processed by the caller.
+
+These options are added to the :py:attr:`options` property.
+
+
+Operation: ``opt-remove``
+++++++++++++++++++++++++++++++++
+The ``opt-remove`` operation can have the following format:
+
+.. code-block:: bash
+   :linenos:
+
+   opt-remove Param1 [SUBSTR]
+
+This command is used to remove options that have *already* been processed
+and added to the :py:attr:`options` property.
+
+Option entries are removed according to the rules:
+
+1. If ``SUBSTR`` is not provided, entries are removed if *any* of
+   its *Param* options are exactly matched.
+2. If the ``SUBSTR`` parameter is included, the matching criteria
+   is relaxed so that an option is removed from the list if any of
+   its parameters *contains* ``Param1`` (i.e., ``Param1`` is a
+   *sub string* of any paramter in the option).
+
+
 :Authors:
     - William C. McLendon III <wcmclen@sandia.gov>
 """
