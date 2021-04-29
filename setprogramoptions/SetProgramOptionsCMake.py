@@ -86,14 +86,17 @@ class SetProgramOptionsCMake(SetProgramOptions):
             self.inifilepath = filename
 
 
+
     # -----------------------
     #   P R O P E R T I E S
     # -----------------------
 
 
+
     # -------------------------------
     #   P U B L I C   M E T H O D S
     # -------------------------------
+
 
 
     # ---------------------------------------------------------------
@@ -214,41 +217,14 @@ class SetProgramOptionsCMake(SetProgramOptions):
             * [1-10]: Reserved for future use (WARNING)
             * > 10  : An unknown failure occurred (CRITICAL)
         """
-        self._validate_parameter(section_name, (str) )
-        self.enter_handler(handler_parameters)
+        return self._option_handler_helper_add(section_name, handler_parameters)
 
-        # -----[ Handler Content Start ]-------------------
-        data_shared_ref = handler_parameters.data_shared['setprogramoptions']
-        op     = handler_parameters.op
-        value  = handler_parameters.value
-        params = handler_parameters.params
-
-        # Varname for CMake set() operations is the first param
-#        varname = params[0]
-
-        # Slice the array
-#        params = params[1:4]
-
-        # Process params to get param options.
-#        param_opts = self._helper_cmake_set_entry_parser(params)
-
-        entry = {'type'    : [op],
-                 'value'   : value,
-                 'params'  : params
-#                 'varname' : varname,
-#                 'options' : param_opts
-                }
-
-        data_shared_ref.append(entry)
-        # -----[ Handler Content End ]---------------------
-
-        self.exit_handler(handler_parameters)
-        return 0
 
 
     # ---------------------------------
     #   H A N D L E R   H E L P E R S
     # ---------------------------------
+
 
 
     # -----------------------

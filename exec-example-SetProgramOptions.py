@@ -52,17 +52,21 @@ def test_setprogramoptions(filename="config.ini"):
     # parser.parse_all_sections()
 
     #section_name = "TEST_CONFIGURATION_A"
-    section_name = "TEST_CONFIGURATION_D"
+    #section_name = "TEST_CONFIGURATION_D"
     section_name = "TRILINOS_CONFIGURATION_ALPHA"
-    section_name = "TEST_CMAKE_CACHE_PARAM_ORDER"
+    #section_name = "TEST_CMAKE_CACHE_PARAM_ORDER"
 
     parse_section(parser, section_name)
 
+    print("")
+    print("parser.options")
+    print("--------------")
     pprint(parser.options, width=200, sort_dicts=False)
 
     # option_list = parser.gen_option_list(section_name) # defaults to bash
     option_list = parser.gen_option_list(section_name, generator="bash")
     # pprint(option_list)
+    print("")
     print("Bash Output")
     print("-----------")
     print( " \\\n    ".join(option_list) )
@@ -90,13 +94,13 @@ def parse_section(parser, section):
     data = parser.configparserenhanceddata[section]
 
     print("\nData")
-    print("====")
+    print("----")
     pprint(data, width=120)
 
     # Print the loginfo from the last search
     if(False):
         print("\nLogInfo")
-        print("=======")
+        print("-------")
         #parser._loginfo_print(pretty=True)
         handler_list = [ (d['type'], d['name']) for d in parser._loginfo if d['type'] in ['handler-entry','handler-exit']]
         pprint(handler_list, width=120)

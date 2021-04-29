@@ -323,7 +323,7 @@ class SetProgramOptionsTest(TestCase):
 
         handler_parameters = HandlerParameters.HandlerParameters()
         handler_parameters.data_internal['processed_sections'] = set()
-        handler_parameters.data_shared['setprogramoptions'] = []
+        handler_parameters.data_shared[parser._data_shared_key] = []
         parser._initialize_handler_parameters(section, handler_parameters)
 
         print("-----[ TEST END ]------------------------------------------")
