@@ -73,7 +73,7 @@ class SetProgramOptionsCMake(SetProgramOptions):
     - Adds a new **.ini** file command: ``opt-set-cmake-var``
       which can have the format: ``opt-set-cmake-var VARNAME [TYPE] : VALUE``
     - Adds a new back-end generator for ``cmake_fragment``
-      files for the ``gen_option_list`` method.
+      files for the :py:meth:`setprogramoptions.SetProgramOptions.gen_option_list` method.
     """
     def __init__(self, filename=None):
         if filename is not None:
