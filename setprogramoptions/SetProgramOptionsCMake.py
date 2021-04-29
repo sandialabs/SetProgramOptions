@@ -1,11 +1,14 @@
 #!/usr/bin/env python3
 # -*- mode: python; py-indent-offset: 4; py-continuation-offset: 4 -*-
 """
+SetProgramOptionsCMake
+======================
+
 ``SetProgramOptionsCMake`` is a subclass of the ``SetProgramOptions``
 that adds CMake-specific handlers for the following .ini file operations:
 
 Operation: ``opt-set-cmake-var``
-----------------------------------
+++++++++++++++++++++++++++++++++
 The ``opt-set-cmake-var`` operation can have the following format:
 
 .. code-block:: bash
@@ -71,15 +74,6 @@ class SetProgramOptionsCMake(SetProgramOptions):
       which can have the format: ``opt-set-cmake-var VARNAME [TYPE] : VALUE``
     - Adds a new back-end generator for ``cmake_fragment``
       files for the ``gen_option_list`` method.
-
-
-    Todo:
-        Add docstrings to functions and handlers.
-
-    .. configparser reference:
-        https://docs.python.org/3/library/configparser.html
-    .. docstrings style reference:
-        https://www.sphinx-doc.org/en/master/usage/extensions/example_google.html
     """
     def __init__(self, filename=None):
         if filename is not None:
@@ -109,11 +103,11 @@ class SetProgramOptionsCMake(SetProgramOptions):
         **cmake fragment** line-item handler for ``opt-set`` entries.
         Sine we don't care about that for a CMake fragment this can be a noop.
 
-        Including this function prevents an ``exception_control_event`` WARNING
-        from being generated in ``SetProgramOptions``.
+        Including this function prevents an ``exception_control_event`` warning
+        from being generated in :py:class:`setprogramoptions.SetProgramOptions`.
 
         This method is essentially a noop but we can keep it in case someone ever
-        turns ``exception_control_level`` to max. This is because if this function
+        turns ``exception_control_level`` (ecl) to max. This is because if this function
         isn't defined a "SILENT" ``exception_control_event`` will get tripped in
         ``SetProgramOptions``. Normally this would just pass on by but since SILENT
         events are treated as WARNINGS with respect to raising an exception, removing
@@ -121,6 +115,9 @@ class SetProgramOptionsCMake(SetProgramOptions):
 
         That said, keeping this method around could still be seen as *optional* in
         that removing it will not affect application behaviour under *normal* use.
+
+        Called By: :py:meth:`setprogramoptions.SetProgramOptions._gen_option_entry`
+        using method name scheme: ``_program_option_handler_<operation>_<generator>()``
 
         Args:
             params (list): The list of parameter entries extracted from the
@@ -141,16 +138,21 @@ class SetProgramOptionsCMake(SetProgramOptions):
         The generated output for this command should be valid according to
         the CMake `set() <https://cmake.org/cmake/help/latest/command/set.html>`_ command.
 
-        Valid formats for the CMake ``set()`` command are:
+        Valid formats for `set() <https://cmake.org/cmake/help/latest/command/set.html>`_ are:
 
-        - ``set(<variable> <value> [FORCE] [PARENT_SCOPE])``
-        - ``set(<variable> <value> CACHE <type> <docstring> [FORCE] [PARENT_SCOPE])``
+        - `set(<variable> <value> [FORCE] [PARENT_SCOPE]) <https://cmake.org/cmake/help/latest/command/set.html#set-normal-variable>`_
+        - `set(<variable> <value> CACHE <type> <docstring> [FORCE] [PARENT_SCOPE]) <https://cmake.org/cmake/help/latest/command/set.html#set-cache-entry>`_
 
-        We do *not* support the ``set(ENV{<variable>} [<value>])`` variant.
+        We do *not* support the
+        `set(ENV{<variable>} [<value>]) <https://cmake.org/cmake/help/latest/command/set.html#set-environment-variable>`_
+        variant.
+
+        Called By: :py:meth:`setprogramoptions.SetProgramOptions._gen_option_entry`
+        using method name scheme: ``_program_option_handler_<operation>_<generator>()``
 
         Note:
             It's ok to modify ``params`` and ``value`` here without concern of
-            side-effects since ``_gen_option_entry()`` in ``SetProgramOptions``
+            side-effects since :py:meth:`setprogramoptions.SetProgramOptions._gen_option_entry`
             performs a deep-copy of these parameters prior to calling this.
             Any changes we make are ephemeral.
         """
@@ -176,12 +178,15 @@ class SetProgramOptionsCMake(SetProgramOptions):
 
     def _program_option_handler_opt_set_cmake_var_bash(self, params, value) -> str:
         """
-        **bash** line-item generator for ``opt-set-cmake-var`` entries when
-        the *generator* is set to ``bash``.
+        Line-item generator for ``opt-set-cmake-var`` entries when the *generator*
+        is set to ``bash``.
+
+        Called By: :py:meth:`setprogramoptions.SetProgramOptions._gen_option_entry`
+        using method name scheme: ``_program_option_handler_<operation>_<generator>()``
 
         Note:
             It's ok to modify ``params`` and ``value`` here without concern of
-            side-effects since ``_gen_option_entry()`` in ``SetProgramOptions``
+            side-effects since :py:meth:`setprogramoptions.SetProgramOptions._gen_option_entry`
             performs a deep-copy of these parameters prior to calling this.
             Any changes we make are ephemeral.
         """
@@ -206,16 +211,19 @@ class SetProgramOptionsCMake(SetProgramOptions):
     def _handler_opt_set_cmake_var(self, section_name, handler_parameters) -> int:
         """Handler for ``opt-set-cmake-var``
 
+        Called By: ``configparserenhanced.ConfigParserEnhanced`` parser.
+
         Args:
             section_name (str): The name of the section being processed.
             handler_parameters (HandlerParameters): The parameters passed to
                 the handler.
 
         Returns:
-            int:
-            * 0     : SUCCESS
-            * [1-10]: Reserved for future use (WARNING)
-            * > 10  : An unknown failure occurred (CRITICAL)
+            int: Status value indicating success or failure.
+
+            - 0     : SUCCESS
+            - [1-10]: Reserved for future use (WARNING)
+            - > 10  : An unknown failure occurred (CRITICAL)
         """
         return self._option_handler_helper_add(section_name, handler_parameters)
 
@@ -237,18 +245,23 @@ class SetProgramOptionsCMake(SetProgramOptions):
         Processes the list of parameters to detect the existence of
         flags for variables. This is consumed when generating option lists
         because the relevance of some options depends on the back-end
-        generator. For example, "PARENT_SCOPE" is relevant to a ``cmake_fragment``
+        generator. For example, ``PARENT_SCOPE`` is relevant to a ``cmake_fragment``
         generator but does not get used for a ``bash`` option that would be
         provided to the ``camke`` application on the command line.
 
+        Called By:
+
+        - :py:meth:`_program_option_handler_opt_set_cmake_var_bash`
+        - :py:meth:`_program_option_handler_opt_set_cmake_var_cmake_fragment`
+
         Args:
-            params (list): The list of parameters pulled out of the .ini
-                file entry.
+            params (:obj:`list` of :obj:`str`): The list of parameters
+                pulled out of the .ini file entry.
 
         Returns:
-            dict: A ``dictinary`` object that captures the existence or
-                omission of flags that are applicable to a CMake Cache
-                variable operation.
+            dict: A dictinary object that captures the existence or
+            omission of flags that are applicable to a CMake Cache
+            variable operation.
         """
         output = {'FORCE': False,
                   'PARENT_SCOPE': False,

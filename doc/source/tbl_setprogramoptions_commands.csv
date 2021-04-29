@@ -1,0 +1,3 @@
+Operation,Usage,Description
+**opt-set**,``opt-set Param1 [Param2] [ParamN]: VALUE``,Sets a program option.
+**opt-remove**,``opt-remove Param1 [SUBSTR]``,Removes options in the option list that match ``Param1``.
