@@ -1,0 +1,2 @@
+Operation,Usage,Description
+**opt-set-cmake-var**,``opt-set-cmake-var VARNAME [TYPE] [FORCE] [PARENT_SCOPE]: VALUE``,Sets a CMake variable.

@@ -11,7 +11,7 @@ from __future__ import print_function
 #from textwrap import dedent
 
 # For type-hinting
-from typing import List,Set,Dict,Tuple,Optional,Iterable
+from typing import Dict,Iterable,List,Optional,Set,Tuple,Union
 
 try:                  # pragma: no cover
     # @final decorator, requires Python 3.8.x
@@ -68,15 +68,21 @@ class SetProgramOptions(ConfigParserEnhanced):
         as the place we're storing the action list and other data associated with the
         ``ConfigParserEnhanced`` parsing of a given *root* section.
 
-        This information is generally copied out during the ``handler_finalize`` into
+        This information is generally copied out during the :py:meth:`handler_finalize` into
         some class property for accessing beyond the search itself.
 
         Currently this just uses the current class name.
 
         Returns:
-            str: A string containing a default key that is used by the
-                ``handler_parameters.data_shared`` as the dictionary
-                key.
+            str: Default dictionary key internal parser use.
+
+            This property returns a string that is used as the default
+            *key* in ``handler_parameters.data_shared`` to bin the data
+            being generated during a search.
+
+            This can be used in the :py:meth:`handler_finalize`
+            method to extract the shared data captured by the parser before it
+            is discarded at the end of a search.
 
         """
         return self.__class__.__name__
@@ -85,7 +91,7 @@ class SetProgramOptions(ConfigParserEnhanced):
     @property
     def options(self) -> dict:
         """
-        The ``options`` property contains the set of parsed options that has
+        The :py:attr:`options` property contains the set of parsed options that has
         been processed so far stored as a dictionary. For example, the following
         .ini snippet:
 
@@ -96,7 +102,7 @@ class SetProgramOptions(ConfigParserEnhanced):
             opt-set cmake
             opt-set -G : Ninja
 
-        might generate the folllowing result in ``options``:
+        might generate the folllowing result in :py:attr:`options`:
 
             >>> parser.options
             {'SECTION_A':
@@ -140,7 +146,7 @@ class SetProgramOptions(ConfigParserEnhanced):
 
         Generates a list of strings that captures the requested
         operation based on the entries in the .ini file that is
-        stored in ``options`` during parsing.
+        stored in :py:attr:`options` during parsing.
 
         The ``bash`` generator will generate a set of 'bash' like
         entries that could be concactenated to generate a bash command.
@@ -178,8 +184,8 @@ class SetProgramOptions(ConfigParserEnhanced):
                 -G=Ninja \\
                 /path/to/source/dir
 
-        This can then be executed in a bash shell or saved to a script file that could
-        be executed separately.
+        This can then be executed in a bash shell or saved to a script file
+        that could be executed separately.
 
         Args:
             section (str): The section name that contains the options
@@ -202,10 +208,9 @@ class SetProgramOptions(ConfigParserEnhanced):
 
         section_data = self.options[section]
 
+
         for option_entry in section_data:
-            gen_method_name = "_gen_option_entry"
-            (method_name,method_ref) = self._locate_class_method(gen_method_name)
-            line = method_ref(option_entry, generator)
+            line = self._gen_option_entry(option_entry, generator=generator)
             if line is not None:
                 output.append(line)
 
@@ -218,7 +223,7 @@ class SetProgramOptions(ConfigParserEnhanced):
     # ---------------------------------------------------------------
 
 
-    def _gen_option_entry(self, option_entry: dict, generator='bash') -> str:
+    def _gen_option_entry(self, option_entry: dict, generator='bash') -> Union[str,None]:
         """
         Takes an ``option_entry`` and looks for a specialized handler
         for that option **type**.
@@ -226,21 +231,21 @@ class SetProgramOptions(ConfigParserEnhanced):
         This looks for a method named ``_program_option_handler_<typename>_<generator>``
         where ``typename`` comes from the ``option_entry['type']`` field. For example,
         if ``option_entry['type']`` is ``opt_set`` and ``generator`` is ``bash`` then
-        we look for a method called ``_program_option_handler_opt_set_bash``, which
+        we look for a method called :py:meth:`_program_option_handler_opt_set_bash`, which
         is executed and returns the line-item entry for the given ``option_entry``.
 
         Args:
             option_entry (dict): A dictionary storing a single *option* entry.
 
         Returns:
-            str: A string containing the single entry for this option.
-            None: Can also return ``NoneType`` IF the ``type`` field in ``option_entry``
-                  does not resolve to a proper method and the *exception control level*
-                  is not set sufficiently high to trigger an exception.
+            Union[str,None]: A ``string`` containing the single entry for this option or ``None``
+
+            ``None`` is returned IF the ``type`` field in ``option_entry``
+            does not resolve to a proper method and the *exception control level*
+            is not set sufficiently high to trigger an exception.
 
         Raises:
-            ValueError: A ``ValueError`` is raised if we aren't able to locate
-                the options formatter.
+            ValueError: If we aren't able to locate the options formatter.
         """
         self._validate_parameter(option_entry, (dict))
         self._validate_parameter(generator, (str))
@@ -276,12 +281,22 @@ class SetProgramOptions(ConfigParserEnhanced):
         return output
 
 
-    def _generic_program_option_handler_bash(self, params, value) -> str:
+    def _generic_program_option_handler_bash(self, params:list, value:str) -> str:
         """Generic processer for generic bash options.
 
         This is the simplest kind of option handler for bash-like commands
         where we just concatenate all the ``params`` together and set them
         equal to the ``value``.
+
+        For example:
+
+            >>> params = ['-D','SOMEFLAG',':BOOL']
+            >>> value  = "ON"
+            >>> _generic_program_option_handler_bash(params,value)
+            "-DSOMEFLAG:BOOL=ON"
+
+
+        Called by: :py:meth:`_program_option_handler_opt_set_bash`
 
         Args:
             params (list): A ``list`` of strings containing the parameters
@@ -299,8 +314,18 @@ class SetProgramOptions(ConfigParserEnhanced):
         return output
 
 
-    def _program_option_handler_opt_set_bash(self, params, value) -> str:
-        """BASH generator for ``opt-set`` operations.
+    def _program_option_handler_opt_set_bash(self, params:list, value:str) -> str:
+        """Bash generator for ``opt-set`` operations.
+
+        This method handles the generation of an entry for an
+        ``opt-set`` operation when the **generator** is set to be ``bash``.
+
+        Called by: :py:meth:`_gen_option_entry`.
+
+        Returns:
+            str: A ``string`` containing a generated program option
+            with the parameters concactenated together using the format
+            ``<param1><param2>...<paramN>=<value>`` will be returned.
         """
         return self._generic_program_option_handler_bash(params, value)
 
@@ -311,19 +336,20 @@ class SetProgramOptions(ConfigParserEnhanced):
     # ---------------------------------------------------------------
 
 
-    def handler_initialize(self, section_name, handler_parameters) -> int:
+    def handler_initialize(self, section_name:str, handler_parameters) -> int:
         """Initialize a recursive parse search.
 
         Args:
             section_name (str): The section name string.
-            handler_parameters (object): A HandlerParameters object containing
+            handler_parameters (:obj:`HandlerParameters`): A HandlerParameters object containing
                 the state data we need for this handler.
 
         Returns:
-            integer value
-                - 0     : SUCCESS
-                - [1-10]: Reserved for future use (WARNING)
-                - > 10  : An unknown failure occurred (SERIOUS)
+            int: Status value indicating success or failure.
+
+            - 0     : SUCCESS
+            - [1-10]: Reserved for future use (WARNING)
+            - > 10  : An unknown failure occurred (SERIOUS)
         """
         self.enter_handler(handler_parameters)
 
@@ -337,14 +363,15 @@ class SetProgramOptions(ConfigParserEnhanced):
         return 0
 
 
-    def handler_finalize(self, section_name, handler_parameters) -> int:
+    def handler_finalize(self, section_name:str, handler_parameters) -> int:
         """Finalize a recursive parse search.
 
         Returns:
-            integer value
-                - 0     : SUCCESS
-                - [1-10]: Reserved for future use (WARNING)
-                - > 10  : An unknown failure occurred (SERIOUS)
+            int: Status value indicating success or failure.
+
+            - 0     : SUCCESS
+            - [1-10]: Reserved for future use (WARNING)
+            - > 10  : An unknown failure occurred (SERIOUS)
         """
         self.enter_handler(handler_parameters)
 
@@ -362,7 +389,7 @@ class SetProgramOptions(ConfigParserEnhanced):
         return 0
 
 
-    def _handler_opt_set(self, section_name, handler_parameters) -> int:
+    def _handler_opt_set(self, section_name:str, handler_parameters) -> int:
         """Handler for ``opt-set`` operations
 
         This handler is used for options whose ``key:value`` pair does not
@@ -375,19 +402,20 @@ class SetProgramOptions(ConfigParserEnhanced):
 
         Args:
             section_name (str): The name of the section being processed.
-            handler_parameters (HandlerParameters): The parameters passed to
+            handler_parameters (:obj:`HandlerParameters`): The parameters passed to
                 the handler.
 
         Returns:
-            int:
-            * 0     : SUCCESS
-            * [1-10]: Reserved for future use (WARNING)
-            * > 10  : An unknown failure occurred (CRITICAL)
+            int: Status value indicating success or failure.
+
+            - 0     : SUCCESS
+            - [1-10]: Reserved for future use (WARNING)
+            - > 10  : An unknown failure occurred (CRITICAL)
         """
         return self._option_handler_helper_add(section_name, handler_parameters)
 
 
-    def _handler_opt_remove(self, section_name, handler_parameters) -> int:
+    def _handler_opt_remove(self, section_name:str, handler_parameters) -> int:
         """Handler for ``opt-remove`` operations.
 
         Note:
@@ -395,14 +423,15 @@ class SetProgramOptions(ConfigParserEnhanced):
 
         Args:
             section_name (str): The name of the section being processed.
-            handler_parameters (HandlerParameters): The parameters passed to
+            handler_parameters (:obj:`HandlerParameters`): The parameters passed to
                 the handler.
 
         Returns:
-            int:
-            * 0     : SUCCESS
-            * [1-10]: Reserved for future use (WARNING)
-            * > 10  : An unknown failure occurred (CRITICAL)
+            int: Status value indicating success or failure.
+
+            - 0     : SUCCESS
+            - [1-10]: Reserved for future use (WARNING)
+            - > 10  : An unknown failure occurred (CRITICAL)
         """
         return self._option_handler_helper_remove(section_name, handler_parameters)
 
@@ -417,8 +446,8 @@ class SetProgramOptions(ConfigParserEnhanced):
         """Removes option(s) from the shared data options list.
 
         Removes an option or options from the ``handler_parameters.data_shared["{_data_shared_key}"]``
-        list, where ``{_data_shared_key}`` is generated from the property ``_data_shared_key``.
-        Currently, ``_data_shared_key`` returns the class name of the class object.
+        list, where ``{_data_shared_key}`` is generated from the property :py:attr:`_data_shared_key`.
+        Currently, :py:attr:`_data_shared_key` returns the class name of the class object.
 
         In this case the format can is based on the following .ini snippet:
 
@@ -433,11 +462,12 @@ class SetProgramOptions(ConfigParserEnhanced):
 
         1. Removes entries if one of the parameters matches the provided ``KEYWORD``.
         2. If the optional ``SUBSTR`` parameter is provided, then we remove entries
-           if any paramter *contains* the KEYWORD as either exact match or substring.
+           if any paramter *contains* the ``KEYWORD`` as either an exact match
+           or a substring.
 
         Args:
             section_name (str): The name of the section being processed.
-            handler_parameters (HandlerParameters): The parameters passed to
+            handler_parameters (:obj:`HandlerParameters`): The parameters passed to
                 the handler.
 
         Returns:
@@ -476,12 +506,12 @@ class SetProgramOptions(ConfigParserEnhanced):
         return 0
 
 
-    def _option_handler_helper_add(self, section_name, handler_parameters) -> int:
+    def _option_handler_helper_add(self, section_name:str, handler_parameters) -> int:
         """Add an option to the shared data otions list
 
         Inserts an option into the ``handler_parameters.data_shared["{_data_shared_key}"]``
-        list, where ``{_data_shared_key}`` is generated from the property ``_data_shared_key``.
-        Currently, ``_data_shared_key`` returns the class name of the class object.
+        list, where ``{_data_shared_key}`` is generated from the property :py:attr:`_data_shared_key`.
+        Currently, :py:attr:`_data_shared_key` returns the class name of the class object.
 
         Operations with the format such as this:
 
@@ -493,7 +523,7 @@ class SetProgramOptions(ConfigParserEnhanced):
 
         which result in an ``dict`` entry:
 
-        .. code-blcok:: python
+        .. code-block:: python
             :linenos:
 
             {
@@ -504,14 +534,14 @@ class SetProgramOptions(ConfigParserEnhanced):
 
         this entry is then appended to the
         ``handler_parameters.data_shared[{_data_shared_key}]`` list, where
-        ``_data_shared_key`` is generated from the property ``_data_shared_key``.
+        :py:attr:`_data_shared_key` is generated from the property :py:attr:`_data_shared_key`.
 
-        Currently ``_data_shared_key`` returns the current class name, but
+        Currently :py:attr:`_data_shared_key` returns the current class name, but
         this can be changed if needed.
 
         Args:
             section_name (str): The name of the section being processed.
-            handler_parameters (HandlerParameters): The parameters passed to
+            handler_parameters (:obj:`HandlerParameters`): The parameters passed to
                 the handler.
 
         Returns:
@@ -555,8 +585,8 @@ class SetProgramOptions(ConfigParserEnhanced):
 
         Args:
             section_name (str): The section name string.
-            handler_parameters (object): A HandlerParameters object containing
-                the state data we need for this handler.
+            handler_parameters (:obj:`HandlerParameters`): A HandlerParameters
+                object containing the state data we need for this handler.
         """
         self._validate_parameter(section_name, (str))
         self._validate_handlerparameters(handler_parameters)
