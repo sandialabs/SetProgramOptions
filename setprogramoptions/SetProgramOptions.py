@@ -54,9 +54,32 @@ class SetProgramOptions(ConfigParserEnhanced):
             self.inifilepath = filename
 
 
+
     # -----------------------
     #   P R O P E R T I E S
     # -----------------------
+
+
+    @property
+    def _data_shared_key(self) -> str:
+        """Key used by ``handler_parameters`` for ``shared_data``
+
+        This key is used inside the ``handler_parameters.shared_data[_data_shared_key]``
+        as the place we're storing the action list and other data associated with the
+        ``ConfigParserEnhanced`` parsing of a given *root* section.
+
+        This information is generally copied out during the ``handler_finalize`` into
+        some class property for accessing beyond the search itself.
+
+        Currently this just uses the current class name.
+
+        Returns:
+            str: A string containing a default key that is used by the
+                ``handler_parameters.data_shared`` as the dictionary
+                key.
+
+        """
+        return self.__class__.__name__
 
 
     @property
@@ -104,6 +127,7 @@ class SetProgramOptions(ConfigParserEnhanced):
         self._validate_parameter(value, (dict))
         self._property_options = value
         return self._property_options
+
 
 
     # -------------------------------
@@ -186,6 +210,7 @@ class SetProgramOptions(ConfigParserEnhanced):
                 output.append(line)
 
         return output
+
 
 
     # ---------------------------------------------------------------
@@ -280,6 +305,7 @@ class SetProgramOptions(ConfigParserEnhanced):
         return self._generic_program_option_handler_bash(params, value)
 
 
+
     # ---------------------------------------------------------------
     #   H A N D L E R S  -  C O N F I G P A R S E R E N H A N C E D
     # ---------------------------------------------------------------
@@ -301,7 +327,11 @@ class SetProgramOptions(ConfigParserEnhanced):
         """
         self.enter_handler(handler_parameters)
 
+        # -----[ Handler Content Start ]-------------------
+
         self._initialize_handler_parameters(section_name, handler_parameters)
+
+        # -----[ Handler Content End ]---------------------
 
         self.exit_handler(handler_parameters)
         return 0
@@ -318,11 +348,15 @@ class SetProgramOptions(ConfigParserEnhanced):
         """
         self.enter_handler(handler_parameters)
 
+        # -----[ Handler Content Start ]-------------------
+
         # save the results into the right `options_cache` entry
-        self.options[section_name] = handler_parameters.data_shared["setprogramoptions"]
+        self.options[section_name] = handler_parameters.data_shared[self._data_shared_key]
 
         for entry in self.options[section_name]:
             pprint(entry, width=200, sort_dicts=False)
+
+        # -----[ Handler Content End ]---------------------
 
         self.exit_handler(handler_parameters)
         return 0
@@ -350,7 +384,7 @@ class SetProgramOptions(ConfigParserEnhanced):
             * [1-10]: Reserved for future use (WARNING)
             * > 10  : An unknown failure occurred (CRITICAL)
         """
-        return self._option_handler_helper(section_name, handler_parameters)
+        return self._option_handler_helper_add(section_name, handler_parameters)
 
 
     def _handler_opt_remove(self, section_name, handler_parameters) -> int:
@@ -370,11 +404,53 @@ class SetProgramOptions(ConfigParserEnhanced):
             * [1-10]: Reserved for future use (WARNING)
             * > 10  : An unknown failure occurred (CRITICAL)
         """
+        return self._option_handler_helper_remove(section_name, handler_parameters)
+
+
+
+    # ---------------------------------
+    #   H A N D L E R   H E L P E R S
+    # ---------------------------------
+
+
+    def _option_handler_helper_remove(self, section_name: str, handler_parameters) -> int:
+        """Removes option(s) from the shared data options list.
+
+        Removes an option or options from the ``handler_parameters.data_shared["{_data_shared_key}"]``
+        list, where ``{_data_shared_key}`` is generated from the property ``_data_shared_key``.
+        Currently, ``_data_shared_key`` returns the class name of the class object.
+
+        In this case the format can is based on the following .ini snippet:
+
+        .. code-block:: ini
+            :linenos:
+
+            [SECTION NAME]
+            <operation> KEYWORD [SUBSTR]
+
+        where we remove entries from the *shared dta options* list according to one of the
+        following methods:
+
+        1. Removes entries if one of the parameters matches the provided ``KEYWORD``.
+        2. If the optional ``SUBSTR`` parameter is provided, then we remove entries
+           if any paramter *contains* the KEYWORD as either exact match or substring.
+
+        Args:
+            section_name (str): The name of the section being processed.
+            handler_parameters (HandlerParameters): The parameters passed to
+                the handler.
+
+        Returns:
+            int:
+            * 0     : SUCCESS
+            * [1-10]: Reserved for future use (WARNING)
+            * > 10  : An unknown failure occurred (CRITICAL)
+        """
         self._validate_parameter(section_name, (str) )
         self.enter_handler(handler_parameters)
 
         # -----[ Handler Content Start ]-------------------
-        data_shared_ref = handler_parameters.data_shared['setprogramoptions']
+        data_shared_ref = handler_parameters.data_shared[self._data_shared_key]
 
         params = handler_parameters.params
 
@@ -393,20 +469,45 @@ class SetProgramOptions(ConfigParserEnhanced):
                                           all(rkey not in item for item in entry['params']),
                                           data_shared_ref))
 
-        handler_parameters.data_shared['setprogramoptions'] = data_shared_ref
+        handler_parameters.data_shared[self._data_shared_key] = data_shared_ref
         # -----[ Handler Content End ]---------------------
 
         self.exit_handler(handler_parameters)
         return 0
 
 
-    # ---------------------------------
-    #   H A N D L E R   H E L P E R S
-    # ---------------------------------
+    def _option_handler_helper_add(self, section_name, handler_parameters) -> int:
+        """Add an option to the shared data otions list
 
+        Inserts an option into the ``handler_parameters.data_shared["{_data_shared_key}"]``
+        list, where ``{_data_shared_key}`` is generated from the property ``_data_shared_key``.
+        Currently, ``_data_shared_key`` returns the class name of the class object.
 
-    def _option_handler_helper(self, section_name, handler_parameters) -> int:
-        """
+        Operations with the format such as this:
+
+        .. code-block:: ini
+            :linenos:
+
+            [SECTION NAME]
+            operation Param1 Param2 ... ParamN : Value
+
+        which result in an ``dict`` entry:
+
+        .. code-blcok:: python
+            :linenos:
+
+            {
+                'type'  : [ operation ],
+                'params': [ param1, param2, ... , paramN ],
+                'value' : Value
+            }
+
+        this entry is then appended to the
+        ``handler_parameters.data_shared[{_data_shared_key}]`` list, where
+        ``_data_shared_key`` is generated from the property ``_data_shared_key``.
+
+        Currently ``_data_shared_key`` returns the current class name, but
+        this can be changed if needed.
 
         Args:
             section_name (str): The name of the section being processed.
@@ -423,18 +524,22 @@ class SetProgramOptions(ConfigParserEnhanced):
         self.enter_handler(handler_parameters)
 
         # -----[ Handler Content Start ]-------------------
-        data_shared_ref = handler_parameters.data_shared['setprogramoptions']
+        data_shared_ref = handler_parameters.data_shared[self._data_shared_key]
         op     = handler_parameters.op
         value  = handler_parameters.value
         params = handler_parameters.params
 
-        entry = {'type': [op], 'value': value, 'params': params }
+        entry = {'type'   : [op],
+                 'value'  : value,
+                 'params' : params
+                }
 
         data_shared_ref.append(entry)
         # -----[ Handler Content End ]---------------------
 
         self.exit_handler(handler_parameters)
         return 0
+
 
 
     # -----------------------
@@ -457,8 +562,8 @@ class SetProgramOptions(ConfigParserEnhanced):
         self._validate_handlerparameters(handler_parameters)
 
         data_shared_ref = handler_parameters.data_shared
-        if 'setprogramoptions' not in data_shared_ref.keys():
-            data_shared_ref['setprogramoptions'] = []
+        if self._data_shared_key not in data_shared_ref.keys():
+            data_shared_ref[self._data_shared_key] = []
 
         return 0
 
