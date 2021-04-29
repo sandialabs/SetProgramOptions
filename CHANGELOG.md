@@ -17,10 +17,22 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 #### Todo (for Unreleased)
 -->
 
-
-
-## [0.1.0] - YYYY-MM-DD or [Unreleased]
+## [0.1.X] - <!-- YYYY-MM-DD or --> [Unreleased]
 #### Added
+#### Changed
+#### Deprecated
+#### Removed
+#### Fixed
+#### Security
+#### Internal
+#### Todo (for Unreleased)
+
+
+
+## [0.1.0] - 2021-04-29
+#### Added
+- Initial version release. From now on changes should be noted in the
+  CHANGELOG.
 #### Changed
 #### Deprecated
 #### Removed

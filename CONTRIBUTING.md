@@ -26,15 +26,15 @@ Merge Request Process
 2. Update the CHANGELOG.md file with details of the changes you are making.
 3. Update relevant documentation in the `doc/` folder and any appropriate _docstrings_.
 4. Update unit tests to fully test your additions. We aim for 100% coverage on this project.
-5. Ensure unit tests and documentation build cleanly by running `exec-tests.sh`, `exec-makedoc.sh` 
+5. Ensure unit tests and documentation build cleanly by running `exec-tests.sh`, `exec-makedoc.sh`
    and the _example_ applications in the repository.
 
 Code of Conduct
 ===============
-In the interest of fostering an open and welcoming environment, we as contributors 
-and maintainers pledge to making participation in our project and our community a 
-harassment-free experience for everyone, regardless of age, body size, disability, 
-ethnicity, gender identity and expression, level of experience, nationality, 
+In the interest of fostering an open and welcoming environment, we as contributors
+and maintainers pledge to making participation in our project and our community a
+harassment-free experience for everyone, regardless of age, body size, disability,
+ethnicity, gender identity and expression, level of experience, nationality,
 personal appearance, race, religion, or sexual identity and orientation.
 
 Standards
@@ -47,13 +47,21 @@ Examples of behavior that contributes to creating a positive environment include
 - Showing empathy towards other community members
 
 Examples of unacceptable behavior by participants include:
-- The use of sexualized language or imagery and unwelcome sexual attention 
+- The use of sexualized language or imagery and unwelcome sexual attention
   or advances
 - Trolling, insulting/derogatory comments, and personal or political attacks
 - Public or private harassment
-- Publishing others' private information, such as a physical or electronic 
+- Publishing others' private information, such as a physical or electronic
   address, without explicit permission
-- Other conduct which could reasonably be considered inappropriate in a 
+- Other conduct which could reasonably be considered inappropriate in a
   professional setting
+
+Releases
+========
+When releasing a new _version_ the following files should be updated:
+- `setprogramoptions/version.py`
+- `pyproject.toml`
+- `CHANGELOG.md`
+
 
 [1]: http://semver.org/
