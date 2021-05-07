@@ -158,16 +158,19 @@ class SetProgramOptionsCMake(SetProgramOptions):
         """
         varname    = params[0]
         params     = params[1:4]
+
         param_opts = self._helper_cmake_set_entry_parser(params)
 
         params = [varname, value]
 
-        if param_opts["TYPE"] is not None:
+        if param_opts['TYPE'] is not None:
             params.append("CACHE")
             params.append(param_opts["TYPE"])
             params.append('"from .ini configuration"')
+
         if param_opts['PARENT_SCOPE']:
             params.append("PARENT_SCOPE")
+
         if param_opts['FORCE']:
             params.append("FORCE")
 

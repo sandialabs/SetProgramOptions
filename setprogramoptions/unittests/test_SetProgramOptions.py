@@ -479,4 +479,39 @@ class SetProgramOptionsTest(TestCase):
         return 0
 
 
+    def test_SetProgramOptions_test_spaces_in_value(self):
+        """
+        Test values with spaces to verify that quotes get added.
+        """
+        print("\n")
+        print("Load file: {}".format(self._filename))
+        parser = SetProgramOptions(self._filename)
+        parser.debug_level = 5
+        parser.exception_control_level = 4
+        parser.exception_control_compact_warnings = False
 
+        print("-----[ TEST BEGIN ]----------------------------------------")
+        section = "TEST_SPACES_IN_VALUE"
+        print("Section  : {}".format(section))
+
+        option_list_expect = ['TEST_OPTIONS="-ldl -fsanitize=address"']
+        option_list_actual = parser.gen_option_list(section, generator="bash")
+
+        print("-" * 40)
+        print("Options List Expect")
+        print("-" * 40)
+        pprint(option_list_expect, width=120)
+        print("")
+        print("Options List Actual")
+        print("-" * 40)
+        pprint(option_list_actual, width=120)
+
+        self.assertEqual(option_list_expect, option_list_actual)
+
+        print("-----[ TEST END ]------------------------------------------")
+
+        print("OK")
+        return 0
+
+
+#
