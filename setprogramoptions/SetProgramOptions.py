@@ -320,6 +320,11 @@ class SetProgramOptions(ConfigParserEnhanced):
         if method_ref is not None:
             params = copy.deepcopy(option_entry['params'])
             value  = copy.deepcopy(option_entry['value'])
+
+            # if there's a space in value, inject quotes
+            if value is not None and " " in value:
+                value = '"' + value + '"'
+
             output = method_ref(params, value)
 
         return output

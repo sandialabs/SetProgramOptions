@@ -55,6 +55,10 @@ def test_setprogramoptions(filename="config.ini"):
     #section_name = "TEST_CONFIGURATION_D"
     section_name = "TRILINOS_CONFIGURATION_ALPHA"
     #section_name = "TEST_CMAKE_CACHE_PARAM_ORDER"
+    section_name = "TEST_EXPANSION_IN_ARGUMENT"
+    section_name = "TEST_SPACES_IN_VALUE"
+    section_name = "TEST_SPACES_AND_EXPANSION"
+    section_name = "TEST_VARIABLE_EXPANSION_IN_CMAKE_VAR"
 
     parse_section(parser, section_name)
 
@@ -79,7 +83,6 @@ def test_setprogramoptions(filename="config.ini"):
     print("\n".join(option_list))
     #pprint(option_list)
     print("")
-
 
     return 0
 

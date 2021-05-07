@@ -17,14 +17,16 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 #### Todo (for Unreleased)
 -->
 
-## [0.1.X] - <!-- YYYY-MM-DD or --> [Unreleased]
+## [0.2.X] - <!-- YYYY-MM-DD or --> [Unreleased]
 #### Added
 #### Changed
+- _values_ containing spaces in them will have double quotes (`"`) added to them.
 #### Deprecated
 #### Removed
 #### Fixed
 #### Security
 #### Internal
+- Modified `_gen_option_entry` to detect values with spaces in them and add quotes (`"`) to the string.
 #### Todo (for Unreleased)
 
 
