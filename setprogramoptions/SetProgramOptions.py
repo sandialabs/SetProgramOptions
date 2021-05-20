@@ -384,7 +384,7 @@ class SetProgramOptions(ConfigParserEnhanced):
     #   H A N D L E R S  -  C O N F I G P A R S E R E N H A N C E D
     # ---------------------------------------------------------------
 
-
+    @ConfigParserEnhanced.operation_handler
     def handler_initialize(self, section_name:str, handler_parameters) -> int:
         """Initialize a recursive parse search.
 
@@ -400,18 +400,15 @@ class SetProgramOptions(ConfigParserEnhanced):
             - [1-10]: Reserved for future use (WARNING)
             - > 10  : An unknown failure occurred (SERIOUS)
         """
-        self.enter_handler(handler_parameters)
-
         # -----[ Handler Content Start ]-------------------
 
         self._initialize_handler_parameters(section_name, handler_parameters)
 
         # -----[ Handler Content End ]---------------------
-
-        self.exit_handler(handler_parameters)
         return 0
 
 
+    @ConfigParserEnhanced.operation_handler
     def handler_finalize(self, section_name:str, handler_parameters) -> int:
         """Finalize a recursive parse search.
 
@@ -422,8 +419,6 @@ class SetProgramOptions(ConfigParserEnhanced):
             - [1-10]: Reserved for future use (WARNING)
             - > 10  : An unknown failure occurred (SERIOUS)
         """
-        self.enter_handler(handler_parameters)
-
         # -----[ Handler Content Start ]-------------------
 
         # save the results into the right `options_cache` entry
@@ -433,11 +428,10 @@ class SetProgramOptions(ConfigParserEnhanced):
             pprint(entry, width=200, sort_dicts=False)
 
         # -----[ Handler Content End ]---------------------
-
-        self.exit_handler(handler_parameters)
         return 0
 
 
+    @ConfigParserEnhanced.operation_handler
     def _handler_opt_set(self, section_name:str, handler_parameters) -> int:
         """Handler for ``opt-set`` operations
 
@@ -464,6 +458,7 @@ class SetProgramOptions(ConfigParserEnhanced):
         return self._option_handler_helper_add(section_name, handler_parameters)
 
 
+    @ConfigParserEnhanced.operation_handler
     def _handler_opt_remove(self, section_name:str, handler_parameters) -> int:
         """Handler for ``opt-remove`` operations.
 
@@ -525,9 +520,6 @@ class SetProgramOptions(ConfigParserEnhanced):
             * [1-10]: Reserved for future use (WARNING)
             * > 10  : An unknown failure occurred (CRITICAL)
         """
-        self._validate_parameter(section_name, (str) )
-        self.enter_handler(handler_parameters)
-
         # -----[ Handler Content Start ]-------------------
         data_shared_ref = handler_parameters.data_shared[self._data_shared_key]
 
@@ -550,8 +542,6 @@ class SetProgramOptions(ConfigParserEnhanced):
 
         handler_parameters.data_shared[self._data_shared_key] = data_shared_ref
         # -----[ Handler Content End ]---------------------
-
-        self.exit_handler(handler_parameters)
         return 0
 
 
@@ -599,9 +589,6 @@ class SetProgramOptions(ConfigParserEnhanced):
             * [1-10]: Reserved for future use (WARNING)
             * > 10  : An unknown failure occurred (CRITICAL)
         """
-        self._validate_parameter(section_name, (str) )
-        self.enter_handler(handler_parameters)
-
         # -----[ Handler Content Start ]-------------------
         data_shared_ref = handler_parameters.data_shared[self._data_shared_key]
         op     = handler_parameters.op
@@ -615,8 +602,6 @@ class SetProgramOptions(ConfigParserEnhanced):
 
         data_shared_ref.append(entry)
         # -----[ Handler Content End ]---------------------
-
-        self.exit_handler(handler_parameters)
         return 0
 
 

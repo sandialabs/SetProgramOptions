@@ -129,6 +129,9 @@ class SetProgramOptionsCMake(SetProgramOptions):
         """
         return None
 
+    def _program_option_handler_opt_mod_cmake_var_bash(self, params: list, value: str) -> str:
+        return None
+
 
     def _program_option_handler_opt_set_cmake_var_cmake_fragment(self, params: list, value: str) -> str:
         """
@@ -159,7 +162,7 @@ class SetProgramOptionsCMake(SetProgramOptions):
         varname    = params[0]
         params     = params[1:4]
 
-        param_opts = self._helper_cmake_set_entry_parser(params)
+        param_opts = self._helper_opt_set_cmake_var_parse_parameters(params)
 
         params = [varname, value]
 
@@ -196,7 +199,7 @@ class SetProgramOptionsCMake(SetProgramOptions):
         varname = params[0]
         params  = params[1:4]
 
-        param_opts = self._helper_cmake_set_entry_parser(params)
+        param_opts = self._helper_opt_set_cmake_var_parse_parameters(params)
 
         params = ["-D", varname]
         if param_opts['TYPE'] is not None:
@@ -211,6 +214,7 @@ class SetProgramOptionsCMake(SetProgramOptions):
     # ---------------------------------------------------------------
 
 
+    @ConfigParserEnhanced.operation_handler
     def _handler_opt_set_cmake_var(self, section_name, handler_parameters) -> int:
         """Handler for ``opt-set-cmake-var``
 
@@ -231,6 +235,32 @@ class SetProgramOptionsCMake(SetProgramOptions):
         return self._option_handler_helper_add(section_name, handler_parameters)
 
 
+    @ConfigParserEnhanced.operation_handler
+    def _handler_opt_mod_cmake_var(self, section_name, handler_parameters) -> int:
+        """Handler for ``opt-mod-cmake-var``
+
+        This only applies to *internal* cmake variable modifications and are only
+        used when generating *cmake fragment* files.
+
+        Invoked by ``configparserenhanced.ConfigParserEnhanced`` parser when a
+        ``.ini`` operation ``opt-mod-cmake-var`` is encountered.
+
+        Args:
+            section_name (str): The name of the section being processed.
+            handler_parameters (HandlerParameters): The parameters passed to
+                the handler.
+
+        Returns:
+            int: Status value indicating success or failure.
+
+            - 0     : SUCCESS
+            - [1-10]: Reserved for future use (WARNING)
+            - > 10  : An unknown failure occurred (CRITICAL)
+        """
+        output = self._option_handler_helper_add(section_name, handler_parameters)
+        return output
+
+
 
     # ---------------------------------
     #   H A N D L E R   H E L P E R S
@@ -243,7 +273,7 @@ class SetProgramOptionsCMake(SetProgramOptions):
     # -----------------------
 
 
-    def _helper_cmake_set_entry_parser(self, params: list):
+    def _helper_opt_set_cmake_var_parse_parameters(self, params: list):
         """
         Processes the list of parameters to detect the existence of
         flags for variables. This is consumed when generating option lists
