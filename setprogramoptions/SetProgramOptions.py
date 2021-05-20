@@ -101,23 +101,6 @@ class VariablesInStringsFormatter(object):
         return "${" + field.varname + "}"
 
 
-    # Todo: these will be used for SetProgramOptionsCMake
-    #def _expandvar_CMAKE_bash(self, field):
-        #msg = "`{}`: is invalid in a `bash` context.".format(field.varfield)
-        ## Todo: can we keep track of CMake vars that we know about already
-        ##       and if we _know_ what they'll be then we expand, otherwise
-        ##       we'd throw our hands in the air... like we just don't care.
-        #raise NotImplementedError(msg)
-
-
-    #def _expandvar_ENV_cmake(self, field):
-        #return "$ENV{" + field.varname + "}"
-
-
-    #def _expandvar_CMAKE_cmake(self, field):
-        #return "${" + field.varname + "}"
-
-
     def _format_vars_in_string(self, text, sep='|', generator="bash"):
         """
         Format variables that are formatted like ``${VARNAME|TYPE}`` according
