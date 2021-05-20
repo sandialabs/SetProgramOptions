@@ -59,9 +59,9 @@ def test_setprogramoptions(filename="config.ini"):
     section_name = "TEST_EXPANSION_IN_ARGUMENT"
     section_name = "TEST_SPACES_IN_VALUE"
     section_name = "TEST_SPACES_AND_EXPANSION"
-    section_name = "TEST_VARIABLE_EXPANSION_IN_CMAKE_VAR"
-    section_name = "TEST_SECTION"
-    section_name = "TEST_CMAKE_FRAGMENT_VAR_UPDATE"
+    #section_name = "TEST_VARIABLE_EXPANSION_IN_CMAKE_VAR"
+    #section_name = "TEST_SECTION"
+    section_name = "TEST_VAR_EXPANSION_UPDATE"
 
     parse_section(parser, section_name)
 
@@ -70,9 +70,7 @@ def test_setprogramoptions(filename="config.ini"):
     print("--------------")
     pprint(parser.options, width=200, sort_dicts=False)
 
-    # option_list = parser.gen_option_list(section_name) # defaults to bash
     option_list = parser.gen_option_list(section_name, generator="bash")
-    # pprint(option_list)
     print("")
     print("Bash Output")
     print("-----------")
@@ -119,7 +117,7 @@ def parse_section(parser, section):
 import dataclasses
 
 
-class test_convert(object):
+class VariablesInStringsFormatter(object):
 
     @dataclasses.dataclass(frozen=True)
     class fieldinfo:
@@ -152,9 +150,20 @@ class test_convert(object):
         return "${" + field.varname + "}"
 
 
-
-    def _expandvars(self, text, sep='|', generator="bash"):
+    def format_vars_in_string(self, text, sep='|', generator="bash"):
         """
+        Format variables that are formatted like ``${VARNAME|TYPE}`` according
+        to the proper generator.
+
+        Args:
+            text (str): The string we wish to modify.
+            sep (str): The separator character to distinguish VARNAME from TYPE.
+            generator (str): The kind of generator to use (i.e., are we generating
+                output for a bash script, a CMake fragment, Windows, etc.)
+
+        Raises:
+            Exception: An exception is raised if the appropriate generator helper
+                method is not found.
         """
         generator = generator.lower()
 
@@ -177,17 +186,16 @@ class test_convert(object):
             varfield = "${" + m.groups()[0] + "}"
 
             field = self.fieldinfo(varfield, varname, vartype, m.start(), m.end())
-            print(">>> field =", field)
+            #print(">>> field =", field)
 
             handler_name = "_".join(["_expandvar", vartype, generator])
             func = None
             if hasattr(self, handler_name):
                 func = getattr(self, handler_name)
             else:
-                raise Exception("Missing helper function {}.".format(handler_name))
+                raise Exception("Missing required generator helper: `{}`.".format(handler_name))
 
             output += text[curidx:field.start]
-            #output += func(text[field.start:field.end])
             output += func(field)
             curidx = field.end
 
@@ -198,83 +206,81 @@ class test_convert(object):
 
 
 # _convert_var_<TYPE>_<GENERATOR>
-def _convert_var_ENV_generator(text, fieldinfo):
-    output = ""
+#def _convert_var_ENV_generator(text, fieldinfo):
+    #output = ""
 
-    return output
-
-
-def _stringxformvars(text, sep="|", generator="bash"):
-    """
-    EXPERIMENTAL!
-    """
-#    type_to_generator_map = {
-#        "ENV"  : { "bash" },
-#        "CMAKE": { "bash", "cmake" }
-#    }
+    #return output
 
 
-    pattern = r"\$\{([a-zA-Z0-9_|\*\@\[\]]+)\}"
-    matches = re.finditer(pattern, text)
-
-    generator = generator.lower()
-
-    new_str = ""
-    curidx  = 0
-    for m in matches:
-        print(">>> {}: {}-{} '{}'".format(m.groups()[0], m.start(), m.end(), text[m.start():m.end()]))
-
-        varname = m.groups()[0]
-        idxsep  = varname.index(sep) if sep in varname else None
-
-        vartype = "ENV"
-        if idxsep:
-            vartype = varname[idxsep + len(sep):]
-            vartype = vartype.upper().strip()
-        varname = varname[:idxsep]
-
-        field = fieldinfo(varname, vartype, m.start(), m.end())
-
-        #print(">>> varname = {}".format(varname))
-        #print(">>> vartype = {}".format(vartype))
-        print(">>> field  = {}".format(field))
+#def _stringxformvars(text, sep="|", generator="bash"):
+    #"""
+    #EXPERIMENTAL!
+    #"""
+##    type_to_generator_map = {
+##        "ENV"  : { "bash" },
+##        "CMAKE": { "bash", "cmake" }
+##    }
 
 
+    #pattern = r"\$\{([a-zA-Z0-9_|\*\@\[\]]+)\}"
+    #matches = re.finditer(pattern, text)
 
-        str_var_pre  = "${"
-        str_var_post = "}"
+    #generator = generator.lower()
 
-        if vartype == "ENV":
-            # keep the default if it's bash
-            print(">>> Variable is ENV")
-            pass
-        elif vartype == "CMAKE":
-            print(">>> Variable is CMAKE")
-            str_var_pre  = "$ENV{"
-            str_var_post = "}"
-        else:
-            # Unknown `type`, maybe a typo?
-            raise ValueError("`{}` is an unknown variable type.".format(vartype))
+    #new_str = ""
+    #curidx  = 0
+    #for m in matches:
+        #print(">>> {}: {}-{} '{}'".format(m.groups()[0], m.start(), m.end(), text[m.start():m.end()]))
 
-        new_str += text[curidx:m.start()]
-        new_str += "{}{}{}".format(str_var_pre, varname, str_var_post)
-        curidx = m.end()
+        #varname = m.groups()[0]
+        #idxsep  = varname.index(sep) if sep in varname else None
 
-    new_str += text[curidx:]
-    return new_str
+        #vartype = "ENV"
+        #if idxsep:
+            #vartype = varname[idxsep + len(sep):]
+            #vartype = vartype.upper().strip()
+        #varname = varname[:idxsep]
+
+        #field = fieldinfo(varname, vartype, m.start(), m.end())
+
+        ##print(">>> varname = {}".format(varname))
+        ##print(">>> vartype = {}".format(vartype))
+        #print(">>> field  = {}".format(field))
+
+
+
+        #str_var_pre  = "${"
+        #str_var_post = "}"
+
+        #if vartype == "ENV":
+            ## keep the default if it's bash
+            #print(">>> Variable is ENV")
+            #pass
+        #elif vartype == "CMAKE":
+            #print(">>> Variable is CMAKE")
+            #str_var_pre  = "$ENV{"
+            #str_var_post = "}"
+        #else:
+            ## Unknown `type`, maybe a typo?
+            #raise ValueError("`{}` is an unknown variable type.".format(vartype))
+
+        #new_str += text[curidx:m.start()]
+        #new_str += "{}{}{}".format(str_var_pre, varname, str_var_post)
+        #curidx = m.end()
+
+    #new_str += text[curidx:]
+    #return new_str
 
 
 def experimental(parser, section):
 
-    text = "foo ${bar}-${baz|CMAKE}-${bif|ENV} XXa"
+    #text = "foo ${bar}-${baz|CMAKE}-${bif|ENV} XXa"
 
-    TEST = test_convert()
-    new_str = TEST._expandvars(text, generator="cmake")
+    #TEST = VariablesInStringsFormatter()
+    #new_str = TEST.format_vars_in_string(text, generator="bash")
 
-    #new_str = _stringxformvars(test_str)
-
-    print("old:", text)
-    print("new:", new_str)
+    #print("old:", text)
+    #print("new:", new_str)
 
     return 0
 

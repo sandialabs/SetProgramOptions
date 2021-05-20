@@ -64,8 +64,10 @@ except ImportError:   # pragma: no cover
     pass
 
 import copy
+import dataclasses
 from pathlib import Path
 from pprint import pprint
+import re
 import shlex
 
 from configparserenhanced import *
@@ -77,13 +79,105 @@ from configparserenhanced import *
 # ==============================
 
 
+# ===============================
+#   H E L P E R   C L A S S E S
+# ===============================
+
+
+class VariablesInStringsFormatter(object):
+
+    @dataclasses.dataclass(frozen=True)
+    class fieldinfo:
+        varfield: str
+        varname : str
+        vartype : str
+        start   : int
+        end     : int
+
+
+    def _expandvar_ENV_bash(self, field):
+        """ Expand an Envvar for BASH
+        """
+        return "${" + field.varname + "}"
+
+
+    # Todo: these will be used for SetProgramOptionsCMake
+    #def _expandvar_CMAKE_bash(self, field):
+        #msg = "`{}`: is invalid in a `bash` context.".format(field.varfield)
+        ## Todo: can we keep track of CMake vars that we know about already
+        ##       and if we _know_ what they'll be then we expand, otherwise
+        ##       we'd throw our hands in the air... like we just don't care.
+        #raise NotImplementedError(msg)
+
+
+    #def _expandvar_ENV_cmake(self, field):
+        #return "$ENV{" + field.varname + "}"
+
+
+    #def _expandvar_CMAKE_cmake(self, field):
+        #return "${" + field.varname + "}"
+
+
+    def _format_vars_in_string(self, text, sep='|', generator="bash"):
+        """
+        Format variables that are formatted like ``${VARNAME|TYPE}`` according
+        to the proper generator.
+
+        Args:
+            text (str): The string we wish to modify.
+            sep (str): The separator character to distinguish VARNAME from TYPE.
+            generator (str): The kind of generator to use (i.e., are we generating
+                output for a bash script, a CMake fragment, Windows, etc.)
+
+        Raises:
+            Exception: An exception is raised if the appropriate generator helper
+                method is not found.
+        """
+        generator = generator.lower()
+
+        pattern = r"\$\{([a-zA-Z0-9_" + sep + r"\*\@\[\]]+)\}"
+
+        matches = re.finditer(pattern, text)
+
+        output = ""
+        curidx = 0
+        for m in matches:
+            varfield = m.groups()[0]
+            idxsep  = varfield.index(sep) if sep in varfield else None
+
+            vartype = "ENV"
+            if idxsep:
+                vartype = varfield[idxsep + len(sep):]
+                vartype = vartype.upper().strip()
+            varname = varfield[:idxsep]
+
+            varfield = "${" + m.groups()[0] + "}"
+
+            field = self.fieldinfo(varfield, varname, vartype, m.start(), m.end())
+            #print(">>> field =", field)
+
+            handler_name = "_".join(["_expandvar", vartype, generator])
+            func = None
+            if hasattr(self, handler_name):
+                func = getattr(self, handler_name)
+            else:
+                raise Exception("Missing required generator helper: `{}`.".format(handler_name))
+
+            output += text[curidx:field.start]
+            output += func(field)
+            curidx = field.end
+
+        output += text[curidx:]
+        return output
+
+
 
 # ===============================
 #   M A I N   C L A S S
 # ===============================
 
 
-class SetProgramOptions(ConfigParserEnhanced):
+class SetProgramOptions(ConfigParserEnhanced, VariablesInStringsFormatter):
     """
     Todo:
         Add docstrings to functions and handlers.
@@ -359,7 +453,7 @@ class SetProgramOptions(ConfigParserEnhanced):
         """
         output = "".join(params)
         if value is not None:
-            output += "={}".format(value)
+            output += "=" + self._format_vars_in_string(value, generator="bash")
         return output
 
 

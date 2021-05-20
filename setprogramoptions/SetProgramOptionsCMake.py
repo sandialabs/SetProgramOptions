@@ -53,6 +53,7 @@ import shlex
 
 from configparserenhanced import *
 from .SetProgramOptions import SetProgramOptions
+from .SetProgramOptions import VariablesInStringsFormatter
 
 
 
@@ -63,11 +64,44 @@ from .SetProgramOptions import SetProgramOptions
 
 
 # ===============================
+#   H E L P E R   C L A S S E S
+# ===============================
+
+
+class VariablesInStringsFormatterCMake(VariablesInStringsFormatter):
+
+
+    def _expandvar_CMAKE_bash(self, field):
+
+        # TODO: can we keep track of CMake vars that we know about already
+        #       and if we _know_ what they'll be then we expand, otherwise
+        #       we'd throw our hands in the air... like we just don't care.
+        return "<<TODO:IMPEMENT ME!!!>>"
+        #msg = "`{}`: is invalid in a `bash` context.".format(field.varfield)
+        #raise NotImplementedError(msg)
+        # TODO: This needs work - See Issue #4
+        #       We may be able to implement something where KNOWN CMake variables
+        #       are cached in SetProgramOptionsCMake and we can keep that updated
+        #       as we go and, if we can resolve it to a _not cmake var_ then we can
+        #       paste that in, otherwise fail since Bash can't expand internal CMake
+        #       vars.
+
+
+    def _expandvar_ENV_cmake_fragment(self, field):
+        return "$ENV{" + field.varname + "}"
+
+
+    def _expandvar_CMAKE_cmake_fragment(self, field):
+        return "${" + field.varname + "}"
+
+
+
+# ===============================
 #   M A I N   C L A S S
 # ===============================
 
 
-class SetProgramOptionsCMake(SetProgramOptions):
+class SetProgramOptionsCMake(SetProgramOptions, VariablesInStringsFormatterCMake):
     """Extends SetProgramOptions to add in CMake option support.
 
     - Adds a new **.ini** file command: ``opt-set-cmake-var``
@@ -129,8 +163,9 @@ class SetProgramOptionsCMake(SetProgramOptions):
         """
         return None
 
-    def _program_option_handler_opt_mod_cmake_var_bash(self, params: list, value: str) -> str:
-        return None
+
+#    def _program_option_handler_opt_mod_cmake_var_bash(self, params: list, value: str) -> str:
+#        return None
 
 
     def _program_option_handler_opt_set_cmake_var_cmake_fragment(self, params: list, value: str) -> str:
@@ -163,6 +198,8 @@ class SetProgramOptionsCMake(SetProgramOptions):
         params     = params[1:4]
 
         param_opts = self._helper_opt_set_cmake_var_parse_parameters(params)
+
+        value = self._format_vars_in_string(value, generator="cmake_fragment")
 
         params = [varname, value]
 
@@ -205,6 +242,8 @@ class SetProgramOptionsCMake(SetProgramOptions):
         if param_opts['TYPE'] is not None:
             params.append(":" + param_opts['TYPE'])
 
+        value = self._format_vars_in_string(value, generator="bash")
+
         return self._generic_program_option_handler_bash(params, value)
 
 
@@ -235,30 +274,30 @@ class SetProgramOptionsCMake(SetProgramOptions):
         return self._option_handler_helper_add(section_name, handler_parameters)
 
 
-    @ConfigParserEnhanced.operation_handler
-    def _handler_opt_mod_cmake_var(self, section_name, handler_parameters) -> int:
-        """Handler for ``opt-mod-cmake-var``
-
-        This only applies to *internal* cmake variable modifications and are only
-        used when generating *cmake fragment* files.
-
-        Invoked by ``configparserenhanced.ConfigParserEnhanced`` parser when a
-        ``.ini`` operation ``opt-mod-cmake-var`` is encountered.
-
-        Args:
-            section_name (str): The name of the section being processed.
-            handler_parameters (HandlerParameters): The parameters passed to
-                the handler.
-
-        Returns:
-            int: Status value indicating success or failure.
-
-            - 0     : SUCCESS
-            - [1-10]: Reserved for future use (WARNING)
-            - > 10  : An unknown failure occurred (CRITICAL)
-        """
-        output = self._option_handler_helper_add(section_name, handler_parameters)
-        return output
+#    @ConfigParserEnhanced.operation_handler
+#    def _handler_opt_mod_cmake_var(self, section_name, handler_parameters) -> int:
+#        """Handler for ``opt-mod-cmake-var``
+#
+#        This only applies to *internal* cmake variable modifications and are only
+#        used when generating *cmake fragment* files.
+#
+#        Invoked by ``configparserenhanced.ConfigParserEnhanced`` parser when a
+#        ``.ini`` operation ``opt-mod-cmake-var`` is encountered.
+#
+#        Args:
+#            section_name (str): The name of the section being processed.
+#            handler_parameters (HandlerParameters): The parameters passed to
+#                the handler.
+#
+#        Returns:
+#            int: Status value indicating success or failure.
+#
+#            - 0     : SUCCESS
+#            - [1-10]: Reserved for future use (WARNING)
+#            - > 10  : An unknown failure occurred (CRITICAL)
+#        """
+#        output = self._option_handler_helper_add(section_name, handler_parameters)
+#        return output
 
 
 
