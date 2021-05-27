@@ -53,7 +53,6 @@ Handlers
 
 Handler Helpers
 ~~~~~~~~~~~~~~~
-.. automethod:: setprogramoptions.SetProgramOptionsCMake._helper_cmake_set_entry_parser
 
 
 Program Option Handlers

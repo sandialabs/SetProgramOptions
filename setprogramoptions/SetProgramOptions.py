@@ -135,7 +135,12 @@ class ExpandVarsInText(object):
     # ---------------------
     #  P R O P E R T I E S
     # ---------------------
+
+
+    default_vartype = TypedProperty.typed_property("default_vartype", expected_type=str, default="ENV", transform=str_toupper)
+
     generator = TypedProperty.typed_property("generator", expected_type=str, default="BASH", transform=str_toupper)
+
     owner     = TypedProperty.typed_property("owner", expected_type=object, default=None)
 
 
@@ -189,9 +194,8 @@ class ExpandVarsInText(object):
         for m in matches:
             varname  = None
             varfield = m.groups()[0]
-            vartype  = "ENV"
-
-            idxsep = varfield.index(sep) if sep in varfield else None
+            vartype  = self.default_vartype
+            idxsep   = varfield.index(sep) if sep in varfield else None
 
             if idxsep is not None:
                 vartype = varfield[idxsep + len(sep):]

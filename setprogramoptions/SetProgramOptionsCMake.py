@@ -166,10 +166,6 @@ class SetProgramOptionsCMake(SetProgramOptions):
         return None
 
 
-#    def _program_option_handler_opt_mod_cmake_var_bash(self, params: list, value: str) -> str:
-#        return None
-
-
     def _program_option_handler_opt_set_cmake_var_cmake_fragment(self, params: list, value: str) -> str:
         """
         **cmake fragment** line-item generator for ``opt-set-cmake-var`` entries when
@@ -293,32 +289,6 @@ class SetProgramOptionsCMake(SetProgramOptions):
             - > 10  : An unknown failure occurred (CRITICAL)
         """
         return self._option_handler_helper_add(section_name, handler_parameters)
-
-
-#    @ConfigParserEnhanced.operation_handler
-#    def _handler_opt_mod_cmake_var(self, section_name, handler_parameters) -> int:
-#        """Handler for ``opt-mod-cmake-var``
-#
-#        This only applies to *internal* cmake variable modifications and are only
-#        used when generating *cmake fragment* files.
-#
-#        Invoked by ``configparserenhanced.ConfigParserEnhanced`` parser when a
-#        ``.ini`` operation ``opt-mod-cmake-var`` is encountered.
-#
-#        Args:
-#            section_name (str): The name of the section being processed.
-#            handler_parameters (HandlerParameters): The parameters passed to
-#                the handler.
-#
-#        Returns:
-#            int: Status value indicating success or failure.
-#
-#            - 0     : SUCCESS
-#            - [1-10]: Reserved for future use (WARNING)
-#            - > 10  : An unknown failure occurred (CRITICAL)
-#        """
-#        output = self._option_handler_helper_add(section_name, handler_parameters)
-#        return output
 
 
 
