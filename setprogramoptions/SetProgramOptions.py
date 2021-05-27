@@ -78,79 +78,147 @@ from configparserenhanced import *
 #  F R E E   F U N C T I O N S
 # ==============================
 
+def str_toupper(text):
+    return str(text).upper()
+
+
+def get_function_ref(context, function_name:str) -> callable:
+    """Helper that locates a class method (if it exists)
+
+    Args:
+        context (obj): The context of where we're going to search for the method.
+            i.e., ``self`` if we're looking for a method within our class.
+        function_name (str): The name of the class method we're searching for.
+
+    Returns:
+        callable: A reference to a callable method is returned if we are successful.
+            Otherwise None
+
+    Raises:
+        AttributError: If the function is not found within the requested context.
+        TypeError: If the attribute is found but is not callable.
+    """
+
+    function_ref = None
+
+    function_ref = getattr(context, function_name)
+
+    if not callable(function_ref):
+        raise TypeError("{}.{} is not callable.".format(context, function_name))
+
+    return function_ref
+
+
 
 # ===============================
 #   H E L P E R   C L A S S E S
 # ===============================
 
 
-class VariablesInStringsFormatter(object):
-
+class ExpandVarsInText(object):
+    """
+    """
     @dataclasses.dataclass(frozen=True)
-    class fieldinfo:
-        varfield: str
-        varname : str
-        vartype : str
-        start   : int
-        end     : int
+    class VariableFieldData:
+        varfield: str = dataclasses.field(repr=False)
+        varname : str = dataclasses.field(repr=True)
+        vartype : str = dataclasses.field(repr=True)
+        start   : int = dataclasses.field(repr=False)
+        end     : int = dataclasses.field(repr=False)
+
+        def __str__(self):
+            output = "{}".format(self.varname)
+            return output
 
 
-    def _expandvar_ENV_bash(self, field):
-        """ Expand an Envvar for BASH
-        """
+
+    # ---------------------
+    #  P R O P E R T I E S
+    # ---------------------
+    generator = TypedProperty.typed_property("generator", expected_type=str, default="BASH", transform=str_toupper)
+    owner     = TypedProperty.typed_property("owner", expected_type=object, default=None)
+
+
+
+    # ---------------
+    #  M E T H O D S
+    # ---------------
+
+
+    def process(self, text):
+        """ Process a text string """
+        output = copy.copy(text)
+
+        tokenized_text = self._tokenize_text_string(text)
+
+        for i in range(len(tokenized_text)):
+            field = tokenized_text[i]
+            if isinstance(field, self.VariableFieldData):
+                conversion_method_name = "_fieldhandler_{}_{}".format(self.generator, field.vartype)
+                conversion_method_ref  = get_function_ref(self, conversion_method_name)
+                tokenized_text[i]      = conversion_method_ref(field)
+
+        output = "".join(tokenized_text)
+
+        return output
+
+
+
+    # ---------------------------------------
+    #  C O N V E R S I O N   H A N D L E R S
+    # ---------------------------------------
+
+
+    def _fieldhandler_BASH_ENV(self, field):
         return "${" + field.varname + "}"
 
 
-    def _format_vars_in_string(self, text, sep='|', generator="bash"):
+
+    # ---------------
+    #  H E L P E R S
+    # ---------------
+
+
+    def _extract_fields_from_text(self, text, sep="|"):
+        """Extracts the variablefields from a text string, if they exist
         """
-        Format variables that are formatted like ``${VARNAME|TYPE}`` according
-        to the proper generator.
-
-        Args:
-            text (str): The string we wish to modify.
-            sep (str): The separator character to distinguish VARNAME from TYPE.
-            generator (str): The kind of generator to use (i.e., are we generating
-                output for a bash script, a CMake fragment, Windows, etc.)
-
-        Raises:
-            Exception: An exception is raised if the appropriate generator helper
-                method is not found.
-        """
-        generator = generator.lower()
-
+        output  = []
         pattern = r"\$\{([a-zA-Z0-9_" + sep + r"\*\@\[\]]+)\}"
-
         matches = re.finditer(pattern, text)
 
-        output = ""
-        curidx = 0
         for m in matches:
+            varname  = None
             varfield = m.groups()[0]
-            idxsep  = varfield.index(sep) if sep in varfield else None
+            vartype  = "ENV"
 
-            vartype = "ENV"
-            if idxsep:
+            idxsep = varfield.index(sep) if sep in varfield else None
+
+            if idxsep is not None:
                 vartype = varfield[idxsep + len(sep):]
                 vartype = vartype.upper().strip()
-            varname = varfield[:idxsep]
 
-            varfield = "${" + m.groups()[0] + "}"
+            varname  = varfield[:idxsep]
+            varfield = "${" + varfield + "}"
 
-            field = self.fieldinfo(varfield, varname, vartype, m.start(), m.end())
-            #print(">>> field =", field)
+            output.append( self.VariableFieldData(varfield, varname, vartype, m.start(), m.end()))
 
-            handler_name = "_".join(["_expandvar", vartype, generator])
-            func = None
-            if hasattr(self, handler_name):
-                func = getattr(self, handler_name)
-            else:
-                raise Exception("Missing required generator helper: `{}`.".format(handler_name))
+        return output
 
-            output += text[curidx:field.start]
-            output += func(field)
-            curidx = field.end
 
-        output += text[curidx:]
+    def _tokenize_text_string(self, text):
+        """Takes a text string and returns a list of text and VariableFieldData entries"""
+        output = []
+
+        varfield_list = self._extract_fields_from_text(text)
+
+        curidx = 0
+        for varfield in varfield_list:
+            output.append( text[curidx:varfield.start] )
+            output.append( varfield )
+            curidx = varfield.end
+
+        output.append( text[curidx:])
+
         return output
 
 
@@ -160,7 +228,7 @@ class VariablesInStringsFormatter(object):
 # ===============================
 
 
-class SetProgramOptions(ConfigParserEnhanced, VariablesInStringsFormatter):
+class SetProgramOptions(ConfigParserEnhanced):
     """
     Todo:
         Add docstrings to functions and handlers.
@@ -256,6 +324,10 @@ class SetProgramOptions(ConfigParserEnhanced, VariablesInStringsFormatter):
         return self._property_options
 
 
+    _var_formatter_cache = typed_property("_varcache", expected_type=dict, default_factory=dict)
+    _var_formatter       = typed_property("_var_formatter", expected_type=ExpandVarsInText, default_factory=ExpandVarsInText)
+
+
 
     # -------------------------------
     #   P U B L I C   M E T H O D S
@@ -329,6 +401,8 @@ class SetProgramOptions(ConfigParserEnhanced, VariablesInStringsFormatter):
 
         section_data = self.options[section]
 
+        # Reset the cached vars in the formatter utility
+        del self._var_formatter_cache
 
         for option_entry in section_data:
             line = self._gen_option_entry(option_entry, generator=generator)
@@ -398,9 +472,15 @@ class SetProgramOptions(ConfigParserEnhanced, VariablesInStringsFormatter):
             params = copy.deepcopy(option_entry['params'])
             value  = copy.deepcopy(option_entry['value'])
 
-            # if there's a space in value, inject quotes
-            if value is not None and " " in value:
-                value = '"' + value + '"'
+            if value is not None:
+                if " " in value:
+                    value = '"' + value + '"'
+
+                # format the value
+                formatter = self._var_formatter
+                formatter.generator = generator
+                formatter.owner     = self
+                value = formatter.process(value)
 
             output = method_ref(params, value)
 
@@ -436,7 +516,7 @@ class SetProgramOptions(ConfigParserEnhanced, VariablesInStringsFormatter):
         """
         output = "".join(params)
         if value is not None:
-            output += "=" + self._format_vars_in_string(value, generator="bash")
+            output += "=" + value
         return output
 
 
@@ -461,6 +541,7 @@ class SetProgramOptions(ConfigParserEnhanced, VariablesInStringsFormatter):
     #   H A N D L E R S  -  C O N F I G P A R S E R E N H A N C E D
     # ---------------------------------------------------------------
 
+
     @ConfigParserEnhanced.operation_handler
     def handler_initialize(self, section_name:str, handler_parameters) -> int:
         """Initialize a recursive parse search.
@@ -477,11 +558,7 @@ class SetProgramOptions(ConfigParserEnhanced, VariablesInStringsFormatter):
             - [1-10]: Reserved for future use (WARNING)
             - > 10  : An unknown failure occurred (SERIOUS)
         """
-        # -----[ Handler Content Start ]-------------------
-
         self._initialize_handler_parameters(section_name, handler_parameters)
-
-        # -----[ Handler Content End ]---------------------
         return 0
 
 
@@ -496,15 +573,8 @@ class SetProgramOptions(ConfigParserEnhanced, VariablesInStringsFormatter):
             - [1-10]: Reserved for future use (WARNING)
             - > 10  : An unknown failure occurred (SERIOUS)
         """
-        # -----[ Handler Content Start ]-------------------
-
         # save the results into the right `options_cache` entry
         self.options[section_name] = handler_parameters.data_shared[self._data_shared_key]
-
-        for entry in self.options[section_name]:
-            pprint(entry, width=200, sort_dicts=False)
-
-        # -----[ Handler Content End ]---------------------
         return 0
 
 
@@ -597,7 +667,6 @@ class SetProgramOptions(ConfigParserEnhanced, VariablesInStringsFormatter):
             * [1-10]: Reserved for future use (WARNING)
             * > 10  : An unknown failure occurred (CRITICAL)
         """
-        # -----[ Handler Content Start ]-------------------
         data_shared_ref = handler_parameters.data_shared[self._data_shared_key]
 
         params = handler_parameters.params
@@ -618,7 +687,6 @@ class SetProgramOptions(ConfigParserEnhanced, VariablesInStringsFormatter):
                                           data_shared_ref))
 
         handler_parameters.data_shared[self._data_shared_key] = data_shared_ref
-        # -----[ Handler Content End ]---------------------
         return 0
 
 
@@ -666,7 +734,6 @@ class SetProgramOptions(ConfigParserEnhanced, VariablesInStringsFormatter):
             * [1-10]: Reserved for future use (WARNING)
             * > 10  : An unknown failure occurred (CRITICAL)
         """
-        # -----[ Handler Content Start ]-------------------
         data_shared_ref = handler_parameters.data_shared[self._data_shared_key]
         op     = handler_parameters.op
         value  = handler_parameters.value
@@ -678,7 +745,6 @@ class SetProgramOptions(ConfigParserEnhanced, VariablesInStringsFormatter):
                 }
 
         data_shared_ref.append(entry)
-        # -----[ Handler Content End ]---------------------
         return 0
 
 

@@ -53,7 +53,9 @@ import shlex
 
 from configparserenhanced import *
 from .SetProgramOptions import SetProgramOptions
-from .SetProgramOptions import VariablesInStringsFormatter
+from .SetProgramOptions import ExpandVarsInText
+
+from configparserenhanced.TypedProperty import typed_property
 
 
 
@@ -68,31 +70,28 @@ from .SetProgramOptions import VariablesInStringsFormatter
 # ===============================
 
 
-class VariablesInStringsFormatterCMake(VariablesInStringsFormatter):
+class ExpandVarsInTextCMake(ExpandVarsInText):
 
 
-    def _expandvar_CMAKE_bash(self, field):
+    def _fieldhandler_BASH_CMAKE(self, field):
+        """Format CMAKE fields for the BASH generator."""
+        output = field.varfield
 
-        # TODO: can we keep track of CMake vars that we know about already
-        #       and if we _know_ what they'll be then we expand, otherwise
-        #       we'd throw our hands in the air... like we just don't care.
-        return "<<TODO:IMPEMENT ME!!!>>"
-        #msg = "`{}`: is invalid in a `bash` context.".format(field.varfield)
-        #raise NotImplementedError(msg)
-        # TODO: This needs work - See Issue #4
-        #       We may be able to implement something where KNOWN CMake variables
-        #       are cached in SetProgramOptionsCMake and we can keep that updated
-        #       as we go and, if we can resolve it to a _not cmake var_ then we can
-        #       paste that in, otherwise fail since Bash can't expand internal CMake
-        #       vars.
+        if field.varname in self.owner._var_formatter_cache.keys():
+            output = self.owner._var_formatter_cache[field.varname].strip('"')
+        return output
 
 
-    def _expandvar_ENV_cmake_fragment(self, field):
-        return "$ENV{" + field.varname + "}"
+    def _fieldhandler_CMAKE_FRAGMENT_ENV(self, field):
+        """Format ENV fields for CMAKE_FRAGMENT generators."""
+        output = "$ENV{" + field.varname + "}"
+        return output
 
 
-    def _expandvar_CMAKE_cmake_fragment(self, field):
-        return "${" + field.varname + "}"
+    def _fieldhandler_CMAKE_FRAGMENT_CMAKE(self, field):
+        """Format CMAKE fields for CMAKE_FRAGMENT generators."""
+        output = "${" + field.varname + "}"
+        return output
 
 
 
@@ -101,7 +100,7 @@ class VariablesInStringsFormatterCMake(VariablesInStringsFormatter):
 # ===============================
 
 
-class SetProgramOptionsCMake(SetProgramOptions, VariablesInStringsFormatterCMake):
+class SetProgramOptionsCMake(SetProgramOptions):
     """Extends SetProgramOptions to add in CMake option support.
 
     - Adds a new **.ini** file command: ``opt-set-cmake-var``
@@ -118,6 +117,9 @@ class SetProgramOptionsCMake(SetProgramOptions, VariablesInStringsFormatterCMake
     # -----------------------
     #   P R O P E R T I E S
     # -----------------------
+
+
+    _var_formatter = typed_property("_varhandler", expected_type=ExpandVarsInTextCMake, default_factory=ExpandVarsInTextCMake)
 
 
 
@@ -199,8 +201,6 @@ class SetProgramOptionsCMake(SetProgramOptions, VariablesInStringsFormatterCMake
 
         param_opts = self._helper_opt_set_cmake_var_parse_parameters(params)
 
-        value = self._format_vars_in_string(value, generator="cmake_fragment")
-
         params = [varname, value]
 
         if param_opts['TYPE'] is not None:
@@ -242,11 +242,32 @@ class SetProgramOptionsCMake(SetProgramOptions, VariablesInStringsFormatterCMake
         if param_opts['TYPE'] is not None:
             params.append(":" + param_opts['TYPE'])
 
-        value = self._format_vars_in_string(value, generator="bash")
+        # Cache 'known' CMake vars here.
+        self._var_formatter_cache[varname] = value
 
         return self._generic_program_option_handler_bash(params, value)
 
 
+    @ConfigParserEnhanced.operation_handler
+    def handler_initialize(self, section_name:str, handler_parameters) -> int:
+        """Initialize a recursive parse search.
+
+        Args:
+            section_name (str): The section name string.
+            handler_parameters (:obj:`HandlerParameters`): A HandlerParameters object containing
+                the state data we need for this handler.
+
+        Returns:
+            int: Status value indicating success or failure.
+
+            - 0     : SUCCESS
+            - [1-10]: Reserved for future use (WARNING)
+            - > 10  : An unknown failure occurred (SERIOUS)
+        """
+        # Invoke the handler_initialize from SetProgramOptions
+        super().handler_initialize(section_name, handler_parameters)
+
+        return 0
 
     # ---------------------------------------------------------------
     #   H A N D L E R S  -  C O N F I G P A R S E R E N H A N C E D

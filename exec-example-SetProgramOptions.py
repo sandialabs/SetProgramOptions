@@ -70,22 +70,22 @@ def test_setprogramoptions(filename="config.ini"):
     print("--------------")
     pprint(parser.options, width=200, sort_dicts=False)
 
-    option_list = parser.gen_option_list(section_name, generator="bash")
     print("")
     print("Bash Output")
     print("-----------")
+    option_list = parser.gen_option_list(section_name, generator="bash")
     print( " \\\n    ".join(option_list) )
 
     # generate CMake fragment
-    option_list = parser.gen_option_list(section_name, generator="cmake_fragment")
+
     print("")
     print("CMake Fragment")
     print("--------------")
+    option_list = parser.gen_option_list(section_name, generator="cmake_fragment")
     if len(option_list) > 0:
         print("\n".join(option_list))
     else:
         print("-")
-    #pprint(option_list)
     print("")
 
     return 0
