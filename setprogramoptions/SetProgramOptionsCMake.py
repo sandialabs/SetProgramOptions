@@ -53,12 +53,50 @@ import shlex
 
 from configparserenhanced import *
 from .SetProgramOptions import SetProgramOptions
+from .SetProgramOptions import ExpandVarsInText
+
+from configparserenhanced.TypedProperty import typed_property
 
 
 
 # ==============================
 #  F R E E   F U N C T I O N S
 # ==============================
+
+
+# ===============================
+#   H E L P E R   C L A S S E S
+# ===============================
+
+
+class ExpandVarsInTextCMake(ExpandVarsInText):
+    """
+    Extends ``ExpandVarsInText`` class to add in support for a ``CMAKE`` generator.
+    """
+    def _fieldhandler_BASH_CMAKE(self, field):
+        """Format CMAKE fields for the BASH generator."""
+        output = field.varfield
+        if field.varname in self.owner._var_formatter_cache.keys():
+            output = self.owner._var_formatter_cache[field.varname].strip('"')
+        else:
+            # A CMake var in a BASH command is bad.
+            msg  = "Unhandled variable expansion for `{}`.".format(field.varname)
+            msg += " CMake variables are only valid in a CMake Fragment file."
+            raise ValueError(msg)
+
+        return output
+
+
+    def _fieldhandler_CMAKE_FRAGMENT_ENV(self, field):
+        """Format ENV fields for CMAKE_FRAGMENT generators."""
+        output = "$ENV{" + field.varname + "}"
+        return output
+
+
+    def _fieldhandler_CMAKE_FRAGMENT_CMAKE(self, field):
+        """Format CMAKE fields for CMAKE_FRAGMENT generators."""
+        output = "${" + field.varname + "}"
+        return output
 
 
 
@@ -80,17 +118,20 @@ class SetProgramOptionsCMake(SetProgramOptions):
             self.inifilepath = filename
 
 
-
     # -----------------------
     #   P R O P E R T I E S
     # -----------------------
 
 
+    # _var_formatter property handles the expansion of var fields in text.
+    _var_formatter = typed_property("_varhandler",
+                                    expected_type=ExpandVarsInTextCMake,
+                                    default_factory=ExpandVarsInTextCMake)
+
 
     # -------------------------------
     #   P U B L I C   M E T H O D S
     # -------------------------------
-
 
 
     # ---------------------------------------------------------------
@@ -130,6 +171,34 @@ class SetProgramOptionsCMake(SetProgramOptions):
         return None
 
 
+    def _program_option_handler_opt_set_cmake_var_bash(self, params, value) -> str:
+        """
+        Line-item generator for ``opt-set-cmake-var`` entries when the *generator*
+        is set to ``bash``.
+
+        Called By: :py:meth:`setprogramoptions.SetProgramOptions._gen_option_entry`
+        using method name scheme: ``_program_option_handler_<operation>_<generator>()``
+
+        Note:
+            It's ok to modify ``params`` and ``value`` here without concern of
+            side-effects since :py:meth:`setprogramoptions.SetProgramOptions._gen_option_entry`
+            performs a deep-copy of these parameters prior to calling this.
+            Any changes we make are ephemeral.
+        """
+        varname    = params[0]
+        params     = params[1:4]
+        param_opts = self._helper_opt_set_cmake_var_parse_parameters(params)
+
+        params = ["-D", varname]
+        if param_opts['TYPE'] is not None:
+            params.append(":" + param_opts['TYPE'])
+
+        # Cache 'known' CMake vars here.
+        self._var_formatter_cache[varname] = value
+
+        return self._generic_program_option_handler_bash(params, value)
+
+
     def _program_option_handler_opt_set_cmake_var_cmake_fragment(self, params: list, value: str) -> str:
         """
         **cmake fragment** line-item generator for ``opt-set-cmake-var`` entries when
@@ -158,11 +227,9 @@ class SetProgramOptionsCMake(SetProgramOptions):
         """
         varname    = params[0]
         params     = params[1:4]
-
-        param_opts = self._helper_cmake_set_entry_parser(params)
+        param_opts = self._helper_opt_set_cmake_var_parse_parameters(params)
 
         params = [varname, value]
-
         if param_opts['TYPE'] is not None:
             params.append("CACHE")
             params.append(param_opts["TYPE"])
@@ -175,35 +242,28 @@ class SetProgramOptionsCMake(SetProgramOptions):
             params.append("FORCE")
 
         output = "set({})".format(" ".join(params))
-
         return output
 
 
-    def _program_option_handler_opt_set_cmake_var_bash(self, params, value) -> str:
+    @ConfigParserEnhanced.operation_handler
+    def handler_initialize(self, section_name:str, handler_parameters) -> int:
+        """Initialize a recursive parse search.
+
+        Args:
+            section_name (str): The section name string.
+            handler_parameters (:obj:`HandlerParameters`): A HandlerParameters object containing
+                the state data we need for this handler.
+
+        Returns:
+            int: Status value indicating success or failure.
+
+            - 0     : SUCCESS
+            - [1-10]: Reserved for future use (WARNING)
+            - > 10  : An unknown failure occurred (SERIOUS)
         """
-        Line-item generator for ``opt-set-cmake-var`` entries when the *generator*
-        is set to ``bash``.
-
-        Called By: :py:meth:`setprogramoptions.SetProgramOptions._gen_option_entry`
-        using method name scheme: ``_program_option_handler_<operation>_<generator>()``
-
-        Note:
-            It's ok to modify ``params`` and ``value`` here without concern of
-            side-effects since :py:meth:`setprogramoptions.SetProgramOptions._gen_option_entry`
-            performs a deep-copy of these parameters prior to calling this.
-            Any changes we make are ephemeral.
-        """
-        varname = params[0]
-        params  = params[1:4]
-
-        param_opts = self._helper_cmake_set_entry_parser(params)
-
-        params = ["-D", varname]
-        if param_opts['TYPE'] is not None:
-            params.append(":" + param_opts['TYPE'])
-
-        return self._generic_program_option_handler_bash(params, value)
-
+        # Invoke the handler_initialize from SetProgramOptions
+        super().handler_initialize(section_name, handler_parameters)
+        return 0
 
 
     # ---------------------------------------------------------------
@@ -211,6 +271,7 @@ class SetProgramOptionsCMake(SetProgramOptions):
     # ---------------------------------------------------------------
 
 
+    @ConfigParserEnhanced.operation_handler
     def _handler_opt_set_cmake_var(self, section_name, handler_parameters) -> int:
         """Handler for ``opt-set-cmake-var``
 
@@ -231,11 +292,9 @@ class SetProgramOptionsCMake(SetProgramOptions):
         return self._option_handler_helper_add(section_name, handler_parameters)
 
 
-
     # ---------------------------------
     #   H A N D L E R   H E L P E R S
     # ---------------------------------
-
 
 
     # -----------------------
@@ -243,7 +302,7 @@ class SetProgramOptionsCMake(SetProgramOptions):
     # -----------------------
 
 
-    def _helper_cmake_set_entry_parser(self, params: list):
+    def _helper_opt_set_cmake_var_parse_parameters(self, params: list):
         """
         Processes the list of parameters to detect the existence of
         flags for variables. This is consumed when generating option lists
@@ -269,6 +328,7 @@ class SetProgramOptionsCMake(SetProgramOptions):
         output = {'FORCE': False,
                   'PARENT_SCOPE': False,
                   'TYPE': None}
+
         for option in params[:4]:
             if option == "FORCE":
                 output['FORCE'] = True

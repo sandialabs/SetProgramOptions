@@ -7,6 +7,7 @@ from __future__ import print_function  # python 2 -> 3 compatiblity
 
 import os
 from pprint import pprint
+import re
 
 import setprogramoptions
 
@@ -58,7 +59,9 @@ def test_setprogramoptions(filename="config.ini"):
     section_name = "TEST_EXPANSION_IN_ARGUMENT"
     section_name = "TEST_SPACES_IN_VALUE"
     section_name = "TEST_SPACES_AND_EXPANSION"
-    section_name = "TEST_VARIABLE_EXPANSION_IN_CMAKE_VAR"
+    #section_name = "TEST_VARIABLE_EXPANSION_IN_CMAKE_VAR"
+    #section_name = "TEST_SECTION"
+    section_name = "TEST_VAR_EXPANSION_UPDATE_01"
 
     parse_section(parser, section_name)
 
@@ -67,21 +70,22 @@ def test_setprogramoptions(filename="config.ini"):
     print("--------------")
     pprint(parser.options, width=200, sort_dicts=False)
 
-    # option_list = parser.gen_option_list(section_name) # defaults to bash
-    option_list = parser.gen_option_list(section_name, generator="bash")
-    # pprint(option_list)
     print("")
     print("Bash Output")
     print("-----------")
+    option_list = parser.gen_option_list(section_name, generator="bash")
     print( " \\\n    ".join(option_list) )
 
     # generate CMake fragment
-    option_list = parser.gen_option_list(section_name, generator="cmake_fragment")
+
     print("")
     print("CMake Fragment")
     print("--------------")
-    print("\n".join(option_list))
-    #pprint(option_list)
+    option_list = parser.gen_option_list(section_name, generator="cmake_fragment")
+    if len(option_list) > 0:
+        print("\n".join(option_list))
+    else:
+        print("-")
     print("")
 
     return 0
@@ -113,6 +117,9 @@ def parse_section(parser, section):
 
 
 def experimental(parser, section):
+    #text = "foo ${bar}-${baz|CMAKE}-${bif|ENV} XXa"
+    #print("old:", text)
+    #print("new:", new_str)
     return 0
 
 
