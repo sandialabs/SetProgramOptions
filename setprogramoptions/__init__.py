@@ -8,4 +8,8 @@ from .version import __version__
 from .SetProgramOptions import SetProgramOptions
 from .SetProgramOptionsCMake import SetProgramOptionsCMake
 
+# Helpers and Free Functions
+from .common import get_function_ref
+
+
 

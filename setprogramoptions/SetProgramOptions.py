@@ -72,42 +72,13 @@ import shlex
 
 from configparserenhanced import *
 
+from .common import *
+
 
 
 # ==============================
 #  F R E E   F U N C T I O N S
 # ==============================
-
-def str_toupper(text):
-    return str(text).upper()
-
-
-def get_function_ref(context, function_name:str) -> callable:
-    """Helper that locates a class method (if it exists)
-
-    Args:
-        context (obj): The context of where we're going to search for the method.
-            i.e., ``self`` if we're looking for a method within our class.
-        function_name (str): The name of the class method we're searching for.
-
-    Returns:
-        callable: A reference to a callable method is returned if we are successful.
-            Otherwise None
-
-    Raises:
-        AttributError: If the function is not found within the requested context.
-        TypeError: If the attribute is found but is not callable.
-    """
-
-    function_ref = None
-
-    function_ref = getattr(context, function_name)
-
-    if not callable(function_ref):
-        raise TypeError("{}.{} is not callable.".format(context, function_name))
-
-    return function_ref
-
 
 
 # ===============================
@@ -115,21 +86,44 @@ def get_function_ref(context, function_name:str) -> callable:
 # ===============================
 
 
+class _VARTYPE_UNKNOWN(object):
+    """
+    This class serves as a 'default' sentinel type to guard
+    against unset variable types in ``ExpandVarsInText``.
+    """
+    pass
+
+
 class ExpandVarsInText(object):
     """
+    Utility to identify and format variables that are found in a text string.
+
+    This looks for variables embedded in text strings that are formatted like:
+    ``${VARNAME|TYPE}`` where ``TYPE`` denotes what kind of variable we are defining.
+
+    The base type that is known is "ENV" for environment variables.
+
+    The ``TYPE`` field MUST BE PRESENT. We do not provide a default to enforce
+    users of ``SetProgramOptions`` to be *explicit* in defining the type of variable
+    they're declaring.  These are a variables declared in a *pseudo-language* not bash.
     """
+
     @dataclasses.dataclass(frozen=True)
     class VariableFieldData:
+        """Dataclass that caches detected variable fields within a string"""
         varfield: str = dataclasses.field(repr=False)
         varname : str = dataclasses.field(repr=True)
         vartype : str = dataclasses.field(repr=True)
         start   : int = dataclasses.field(repr=False)
         end     : int = dataclasses.field(repr=False)
 
-        def __str__(self):
+        def __str__(self):                                                                          # pragma: no cover
+            """
+            Useful for debugging if you ``print(VariableFieldDataObject)`` but
+            does not get used in normal execution.
+            """
             output = "{}".format(self.varname)
             return output
-
 
 
     # ---------------------
@@ -137,12 +131,26 @@ class ExpandVarsInText(object):
     # ---------------------
 
 
-    default_vartype = TypedProperty.typed_property("default_vartype", expected_type=str, default="ENV", transform=str_toupper)
+    # Default variable type. Default is _VARTYPE_UNKNOWN. If not overridden
+    # or changed then a variable string like "${VARNAME}" that does not contain
+    # a `|TYPE` component will cause a `ValueError` to be raised.
+    default_vartype = TypedProperty.typed_property("default_vartype",
+                                                   expected_type=str,
+                                                   default_factory=_VARTYPE_UNKNOWN,
+                                                   transform=str_toupper)
 
-    generator = TypedProperty.typed_property("generator", expected_type=str, default="BASH", transform=str_toupper)
+    # Generator type. This is the _kind of output_ that we wish to generate.
+    generator = TypedProperty.typed_property("generator",
+                                             expected_type=str,
+                                             default="BASH",
+                                             transform=str_toupper)
 
-    owner     = TypedProperty.typed_property("owner", expected_type=object, default=None)
-
+    # Owner is a link back to the class that instantiated this object.
+    # We use this to look back into the owning `SetProgramOptions` class
+    # to check for cached information (if needed).
+    owner = TypedProperty.typed_property("owner",
+                                         expected_type=object,
+                                         default=None)
 
 
     # ---------------
@@ -150,8 +158,27 @@ class ExpandVarsInText(object):
     # ---------------
 
 
-    def process(self, text):
-        """ Process a text string """
+    def process(self, text:str) -> str:
+        """
+        Process a text string and expand any detected ``variables`` in them.
+
+        This function *detects* each of the fields in a text string that are
+        formatted like ``${VARNAME|VARTYPE}``. There can be multiple fields
+        within a single text entry.
+
+        Each field is converted based on the specified GENERATOR and the VARTYPE of the
+        field. These fields are converted using class methods that are named according
+        to this naming scheme:
+        ``_fieldhandler_GENERATOR_VARTYPE`` where:
+
+        - ``GENERATOR``: The *output* type we're generating, such as "BASH" or "CMAKE".
+        - ``VARTYPE``: The kind of variable that is being processed, such as "ENV" for an
+            environment variable or "CMAKE" for cmake file variables, etc.
+
+        For example, the field handler to convert an ``ENV`` field using a ``BASH`` generator
+        would be named ``_fieldhandler_BASH_ENV(self, field)`` and it accepts an instance
+        of the iner class ``VariableFieldData``.
+        """
         output = copy.copy(text)
 
         tokenized_text = self._tokenize_text_string(text)
@@ -168,15 +195,16 @@ class ExpandVarsInText(object):
         return output
 
 
-
     # ---------------------------------------
     #  C O N V E R S I O N   H A N D L E R S
     # ---------------------------------------
 
 
-    def _fieldhandler_BASH_ENV(self, field):
+    def _fieldhandler_BASH_ENV(self, field) -> str:
+        """
+        Format a field containing an ENVVAR as a BASH entry.
+        """
         return "${" + field.varname + "}"
-
 
 
     # ---------------
@@ -184,33 +212,14 @@ class ExpandVarsInText(object):
     # ---------------
 
 
-    def _extract_fields_from_text(self, text, sep="|"):
-        """Extracts the variablefields from a text string, if they exist
+    def _tokenize_text_string(self, text:str):
         """
-        output  = []
-        pattern = r"\$\{([a-zA-Z0-9_" + sep + r"\*\@\[\]]+)\}"
-        matches = re.finditer(pattern, text)
+        Takes a text string and returns a list of text and VariableFieldData entries
 
-        for m in matches:
-            varname  = None
-            varfield = m.groups()[0]
-            vartype  = self.default_vartype
-            idxsep   = varfield.index(sep) if sep in varfield else None
+        Called By:
+            - ``process()``
 
-            if idxsep is not None:
-                vartype = varfield[idxsep + len(sep):]
-                vartype = vartype.upper().strip()
-
-            varname  = varfield[:idxsep]
-            varfield = "${" + varfield + "}"
-
-            output.append( self.VariableFieldData(varfield, varname, vartype, m.start(), m.end()))
-
-        return output
-
-
-    def _tokenize_text_string(self, text):
-        """Takes a text string and returns a list of text and VariableFieldData entries"""
+        """
         output = []
 
         varfield_list = self._extract_fields_from_text(text)
@@ -222,6 +231,53 @@ class ExpandVarsInText(object):
             curidx = varfield.end
 
         output.append( text[curidx:])
+
+        return output
+
+
+    def _extract_fields_from_text(self, text:str, sep:str="|"):
+        """Extracts the variablefields from a text string.
+
+        Extracts fields from a text string that are formatted like:
+        ``${<VARNAME><SEP><VARTYPE>}`` where:
+
+        - VARNAME is the variable name (REQUIRED)
+        - SEP is the separator. Default is `|`
+        - VARTYPE is the variable type. (REQUIRED)
+
+        Returns:
+            list: A list containing text strings and VariableFieldData entries in place
+                of variable fields that were detected (these are converted later).
+                i.e., ``["foo", VariableFieldData(...), " -a"]``
+
+        Raises:
+            ValueError: If the TYPE field is missing.
+
+        Called By:
+            - ``_tokenize_text_string()``
+        """
+        output  = []
+        pattern = r"\$\{([a-zA-Z0-9_" + sep + r"\*\@\[\]]+)\}"
+        matches = re.finditer(pattern, text)
+
+        for m in matches:
+            varfield = m.groups()[0]
+
+            vartype  = self.default_vartype
+
+            idxsep   = varfield.index(sep) if sep in varfield else None
+            varname  = varfield[:idxsep]
+
+            if idxsep is not None:
+                vartype = varfield[idxsep + len(sep):]
+                vartype = vartype.upper().strip()
+
+            varfield = "${" + varfield + "}"
+
+            if isinstance( vartype, _VARTYPE_UNKNOWN ):
+                raise ValueError("Variable missing TYPE field in expansion of `{}`".format(varfield))
+
+            output.append( self.VariableFieldData(varfield, varname, vartype, m.start(), m.end()))
 
         return output
 
@@ -251,6 +307,10 @@ class SetProgramOptions(ConfigParserEnhanced):
     # -----------------------
     #   P R O P E R T I E S
     # -----------------------
+
+
+    _var_formatter_cache = typed_property("_varcache", expected_type=dict, default_factory=dict)
+    _var_formatter       = typed_property("_var_formatter", expected_type=ExpandVarsInText, default_factory=ExpandVarsInText)
 
 
     @property
@@ -326,10 +386,6 @@ class SetProgramOptions(ConfigParserEnhanced):
         self._validate_parameter(value, (dict))
         self._property_options = value
         return self._property_options
-
-
-    _var_formatter_cache = typed_property("_varcache", expected_type=dict, default_factory=dict)
-    _var_formatter       = typed_property("_var_formatter", expected_type=ExpandVarsInText, default_factory=ExpandVarsInText)
 
 
 
@@ -768,6 +824,9 @@ class SetProgramOptions(ConfigParserEnhanced):
             section_name (str): The section name string.
             handler_parameters (:obj:`HandlerParameters`): A HandlerParameters
                 object containing the state data we need for this handler.
+
+        Called By:
+            - ``handler_initialize()``
         """
         self._validate_parameter(section_name, (str))
         self._validate_handlerparameters(handler_parameters)

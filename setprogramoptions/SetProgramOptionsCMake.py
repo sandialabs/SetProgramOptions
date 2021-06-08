@@ -64,15 +64,16 @@ from configparserenhanced.TypedProperty import typed_property
 # ==============================
 
 
-
 # ===============================
 #   H E L P E R   C L A S S E S
 # ===============================
 
 
 class ExpandVarsInTextCMake(ExpandVarsInText):
-
-
+    """
+    Extension to the ``ExpandVarsInText`` class to add in support
+    for a ``CMAKE`` generator.
+    """
     def _fieldhandler_BASH_CMAKE(self, field):
         """Format CMAKE fields for the BASH generator."""
         output = field.varfield
@@ -113,7 +114,6 @@ class SetProgramOptionsCMake(SetProgramOptions):
             self.inifilepath = filename
 
 
-
     # -----------------------
     #   P R O P E R T I E S
     # -----------------------
@@ -122,11 +122,9 @@ class SetProgramOptionsCMake(SetProgramOptions):
     _var_formatter = typed_property("_varhandler", expected_type=ExpandVarsInTextCMake, default_factory=ExpandVarsInTextCMake)
 
 
-
     # -------------------------------
     #   P U B L I C   M E T H O D S
     # -------------------------------
-
 
 
     # ---------------------------------------------------------------
@@ -194,11 +192,9 @@ class SetProgramOptionsCMake(SetProgramOptions):
         """
         varname    = params[0]
         params     = params[1:4]
-
         param_opts = self._helper_opt_set_cmake_var_parse_parameters(params)
 
         params = [varname, value]
-
         if param_opts['TYPE'] is not None:
             params.append("CACHE")
             params.append(param_opts["TYPE"])
@@ -211,7 +207,6 @@ class SetProgramOptionsCMake(SetProgramOptions):
             params.append("FORCE")
 
         output = "set({})".format(" ".join(params))
-
         return output
 
 
@@ -229,9 +224,8 @@ class SetProgramOptionsCMake(SetProgramOptions):
             performs a deep-copy of these parameters prior to calling this.
             Any changes we make are ephemeral.
         """
-        varname = params[0]
-        params  = params[1:4]
-
+        varname    = params[0]
+        params     = params[1:4]
         param_opts = self._helper_opt_set_cmake_var_parse_parameters(params)
 
         params = ["-D", varname]
@@ -262,8 +256,8 @@ class SetProgramOptionsCMake(SetProgramOptions):
         """
         # Invoke the handler_initialize from SetProgramOptions
         super().handler_initialize(section_name, handler_parameters)
-
         return 0
+
 
     # ---------------------------------------------------------------
     #   H A N D L E R S  -  C O N F I G P A R S E R E N H A N C E D
@@ -291,11 +285,9 @@ class SetProgramOptionsCMake(SetProgramOptions):
         return self._option_handler_helper_add(section_name, handler_parameters)
 
 
-
     # ---------------------------------
     #   H A N D L E R   H E L P E R S
     # ---------------------------------
-
 
 
     # -----------------------
@@ -329,6 +321,7 @@ class SetProgramOptionsCMake(SetProgramOptions):
         output = {'FORCE': False,
                   'PARENT_SCOPE': False,
                   'TYPE': None}
+
         for option in params[:4]:
             if option == "FORCE":
                 output['FORCE'] = True
