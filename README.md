@@ -10,22 +10,73 @@ of **.ini** files that specify *Program Options*.
 `SetProgramOptions` supports all the _operations_ that `ConfigParserEnhanced` supports
 and adds some of its own.
 
-| Operation  | Format                                        | Defined By             |
-| ---------- | --------------------------------------------- | ---------------------- |
-| use        | `use <section>`                               | `ConfigParserEnhanced` |
-| opt-set    | `opt-set Param1 [Param2..ParamN] [: <VALUE>]` | `SetProgramOptions`    |
-| opt-remove | `opt-remove Param [SUBSTR]`                   | `SetProgramOptions`    |
+| Operation    | Format                                        | Defined By             |
+| ------------ | --------------------------------------------- | ---------------------- |
+| `use`        | `use <section>`                               | `ConfigParserEnhanced` |
+| `opt-set`    | `opt-set Param1 [Param2..ParamN] [: <VALUE>]` | `SetProgramOptions`    |
+| `opt-remove` | `opt-remove Param [SUBSTR]`                    | `SetProgramOptions`    |
 
 
 INI File Format
 ---------------
 A **.ini** file that can be processed by `SetProgramOptions` can be formatted like this:
 ```ini
-[SECTION_A]
-opt-set cmake
-
-TOOD: FINISH THIS README!
+[COMMAND_LS]
+opt-set ls 
 ```
+This is perhaps the most simple thing we could do. Using `gen_option_list('COMMAND_LS', generator="bash")` 
+would generate the command `ls` from this.
+
+A more complex section which creates a CMake command call might look like this:
+```ini
+[COMMAND_CMAKE]
+opt-set cmake
+opt-set -G : Ninja
+opt-set -D CMAKE_CXX_FLAGS : "-O3"
+```
+and this would generate the command `cmake -G=Ninja -DCMAKE_CXX_FLAGS="-O3"` when processed for _bash_ output.
+
+We can further exand the CMake example with multiple sections, such as:
+
+```ini
+[CMAKE_COMMAND]
+opt-set cmake
+opt-set -G : Ninja
+
+[CMAKE_OPTIONS_COMMON]
+opt-set -D CMAKE_CXX_FLAGS : "-fopenmp"
+
+[CMAKE_OPTIONS_APPLICATION]
+opt-set -D MYAPP_FLAG1 : "foo"
+opt-set -D MYAPP_FLAG2 : "bar"
+
+[APPLICATION_PATH_TO_SOURCE]
+opt-set /path/to/source/.
+
+[APPLICATION_CMAKE_PROFILE_01]
+use CMAKE_COMMAND
+use CMAKE_OPTIONS_COMMON
+use CMAKE_OPTIONS_APPLICATION
+use APPLICATION_PATH_TO_SOURCE
+
+[APPLICATION_CMAKE_PROFILE_02]
+use APPLICATION_PROFILE_01
+opt-remove MYAPP_FLAG2
+```
+this example is fairly simple but follows a pattern that larger projects might wish to follow when there
+are many configurations that may be getting tested. In this case we set up some common option groups and
+then create aggregation sections that will include the other sectiosn to compose a full command line.
+
+If we generate _bash_ output for `APPLICATION_CMAKE_PROFILE_01` we'll get
+`cmake -G=Ninja -DCMAKE_CXX_FLAGS="-fopenmp" -DMYAPP_FLAG1="foo" -DMYAPP_FLAG2="bar" /path/to/source/.`
+
+Generating _bash_ output for `APPLICATION_CMAKE_PROFILE_02` clones `APPLICATION_CMAKE_PROFILE_01` and then
+_removes_ any entry containing the parameter `MYAPP_FLAG2`. This will result in a generated comand
+`cmake -G=Ninja -DCMAKE_CXX_FLAGS="-fopenmp" -DMYAPP_FLAG1="foo" /path/to/source/.`.
+
+Hopefully, this example shows some of the capabilities that `SetProgramOptions` provides for managing
+many build configurations within a single *.ini* file.
+
 
 ### Variable Expansion within VALUE fields
 Variables can be added to the VALUE fields in handled instructions, but they have their
@@ -51,17 +102,28 @@ of the .ini file.
 Operations Explained
 --------------------
 
-
 ### `use`
-TODO
-
+The `use` operation is provided by `ConfigParserEnhanced`. Please see its documentation on this command and its use.
 
 ### `opt-set`
-TODO
+Sets a generic _command line_ style option. 
+
+The format of this is `opt-set Param1 [Param2] [Param3] ... [ParamN] : [VALUE]`
+
+In a _bash_ context, this operation attempts to generate an option for some command that will be executed.
+`SetProgramOptions` will concactenate the _Params_ together and then append `=VALUE` if a VALUE field is present.
+For example, `opt-set Foo Bar : Baz` will become `FooBar=Baz`.
 
 
 ### `opt-remove`
-TODO
+_Removes_ existing entries that have been processed up to the point the `opt-remove` is encountered that match a pattern.
+
+The format of this is `opt-remove Param [SUBSTR]`
+
+When a _remove_ is encountered, `SetProgramOptions` will search through all processed options and will delete any
+that contain any _Param-i_ that matches `Param`. By default the parameters much be an _exact match_ of `Param`, but 
+if the optional `SUBSTR` parameter is provided then `SetProgramOptions` will treat `Param` as a substing and will 
+remove all existing options if _any parameter contains Param_.
 
 
 SetProgramOptions Examples
