@@ -61,7 +61,7 @@ def test_setprogramoptions(filename="config.ini"):
     section_name = "TEST_SPACES_AND_EXPANSION"
     #section_name = "TEST_VARIABLE_EXPANSION_IN_CMAKE_VAR"
     #section_name = "TEST_SECTION"
-    section_name = "TEST_VAR_EXPANSION_UPDATE"
+    section_name = "TEST_VAR_EXPANSION_UPDATE_01"
 
     parse_section(parser, section_name)
 
