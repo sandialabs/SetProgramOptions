@@ -17,7 +17,20 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 #### Todo (for Unreleased)
 -->
 
-## [0.2.X] - <!-- YYYY-MM-DD or --> [Unreleased]
+
+## [Unreleased]
+#### Added
+#### Changed
+#### Deprecated
+#### Removed
+#### Fixed
+#### Security
+#### Internal
+#### Todo (for Unreleased)
+
+
+
+## [0.2.0] - 2021-06-08
 #### Added
 - `common.py` - moved some free-functions to this.
 - Improved *variable* processing. Variables should now be encoded in our pseudo-langauge
@@ -31,13 +44,8 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
     var type still embedded in the .ini file.
 #### Changed
 - _values_ containing spaces in them will have double quotes (`"`) added to them.
-#### Deprecated
-#### Removed
-#### Fixed
-#### Security
 #### Internal
 - Modified `_gen_option_entry` to detect values with spaces in them and add quotes (`"`) to the string.
-#### Todo (for Unreleased)
 
 
 
@@ -45,12 +53,5 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 #### Added
 - Initial version release. From now on changes should be noted in the
   CHANGELOG.
-#### Changed
-#### Deprecated
-#### Removed
-#### Fixed
-#### Security
-#### Internal
-#### Todo (for Unreleased)
 
 
