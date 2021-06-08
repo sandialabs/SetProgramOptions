@@ -48,11 +48,13 @@ Private API
 
 Handlers
 ~~~~~~~~
+.. automethod:: setprogramoptions.SetProgramOptionsCMake.handler_initialize
 .. automethod:: setprogramoptions.SetProgramOptionsCMake._handler_opt_set_cmake_var
 
 
-Handler Helpers
-~~~~~~~~~~~~~~~
+Helpers
+~~~~~~~
+.. automethod:: setprogramoptions.SetProgramOptionsCMake._helper_opt_set_cmake_var_parse_parameters
 
 
 Program Option Handlers

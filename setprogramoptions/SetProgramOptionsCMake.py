@@ -71,15 +71,19 @@ from configparserenhanced.TypedProperty import typed_property
 
 class ExpandVarsInTextCMake(ExpandVarsInText):
     """
-    Extension to the ``ExpandVarsInText`` class to add in support
-    for a ``CMAKE`` generator.
+    Extends ``ExpandVarsInText`` class to add in support for a ``CMAKE`` generator.
     """
     def _fieldhandler_BASH_CMAKE(self, field):
         """Format CMAKE fields for the BASH generator."""
         output = field.varfield
-
         if field.varname in self.owner._var_formatter_cache.keys():
             output = self.owner._var_formatter_cache[field.varname].strip('"')
+        else:
+            # A CMake var in a BASH command is bad.
+            msg  = "Unhandled variable expansion for `{}`.".format(field.varname)
+            msg += " CMake variables are only valid in a CMake Fragment file."
+            raise ValueError(msg)
+
         return output
 
 
@@ -119,7 +123,10 @@ class SetProgramOptionsCMake(SetProgramOptions):
     # -----------------------
 
 
-    _var_formatter = typed_property("_varhandler", expected_type=ExpandVarsInTextCMake, default_factory=ExpandVarsInTextCMake)
+    # _var_formatter property handles the expansion of var fields in text.
+    _var_formatter = typed_property("_varhandler",
+                                    expected_type=ExpandVarsInTextCMake,
+                                    default_factory=ExpandVarsInTextCMake)
 
 
     # -------------------------------
@@ -162,6 +169,34 @@ class SetProgramOptionsCMake(SetProgramOptions):
             None
         """
         return None
+
+
+    def _program_option_handler_opt_set_cmake_var_bash(self, params, value) -> str:
+        """
+        Line-item generator for ``opt-set-cmake-var`` entries when the *generator*
+        is set to ``bash``.
+
+        Called By: :py:meth:`setprogramoptions.SetProgramOptions._gen_option_entry`
+        using method name scheme: ``_program_option_handler_<operation>_<generator>()``
+
+        Note:
+            It's ok to modify ``params`` and ``value`` here without concern of
+            side-effects since :py:meth:`setprogramoptions.SetProgramOptions._gen_option_entry`
+            performs a deep-copy of these parameters prior to calling this.
+            Any changes we make are ephemeral.
+        """
+        varname    = params[0]
+        params     = params[1:4]
+        param_opts = self._helper_opt_set_cmake_var_parse_parameters(params)
+
+        params = ["-D", varname]
+        if param_opts['TYPE'] is not None:
+            params.append(":" + param_opts['TYPE'])
+
+        # Cache 'known' CMake vars here.
+        self._var_formatter_cache[varname] = value
+
+        return self._generic_program_option_handler_bash(params, value)
 
 
     def _program_option_handler_opt_set_cmake_var_cmake_fragment(self, params: list, value: str) -> str:
@@ -208,34 +243,6 @@ class SetProgramOptionsCMake(SetProgramOptions):
 
         output = "set({})".format(" ".join(params))
         return output
-
-
-    def _program_option_handler_opt_set_cmake_var_bash(self, params, value) -> str:
-        """
-        Line-item generator for ``opt-set-cmake-var`` entries when the *generator*
-        is set to ``bash``.
-
-        Called By: :py:meth:`setprogramoptions.SetProgramOptions._gen_option_entry`
-        using method name scheme: ``_program_option_handler_<operation>_<generator>()``
-
-        Note:
-            It's ok to modify ``params`` and ``value`` here without concern of
-            side-effects since :py:meth:`setprogramoptions.SetProgramOptions._gen_option_entry`
-            performs a deep-copy of these parameters prior to calling this.
-            Any changes we make are ephemeral.
-        """
-        varname    = params[0]
-        params     = params[1:4]
-        param_opts = self._helper_opt_set_cmake_var_parse_parameters(params)
-
-        params = ["-D", varname]
-        if param_opts['TYPE'] is not None:
-            params.append(":" + param_opts['TYPE'])
-
-        # Cache 'known' CMake vars here.
-        self._var_formatter_cache[varname] = value
-
-        return self._generic_program_option_handler_bash(params, value)
 
 
     @ConfigParserEnhanced.operation_handler

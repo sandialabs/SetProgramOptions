@@ -40,11 +40,15 @@ from .common import *
 
 # ===============================================================================
 #
-# General Utility Functions
+# General Utility Data
 #
 # ===============================================================================
 global_gen_new_ground_truth_files = False
 # global_gen_new_ground_truth_files = True     # comment this out for production.
+
+
+class DEFAULT_VALUE(object):
+    pass
 
 
 # ===============================================================================
@@ -90,34 +94,15 @@ class SetProgramOptionsTestCMake(TestCase):
 
         This test doesn't really validate any output -- it just runs a basic check.
         """
-        print("\n")
-        print("Load file: {}".format(self._filename))
-        parser = SetProgramOptionsCMake(self._filename)
-        parser.debug_level = 5
-        parser.exception_control_level = 4
-        parser.exception_control_compact_warnings = False
+        parser = self._create_standard_parser()
 
         print("-----[ TEST BEGIN ]----------------------------------------")
         section = "CMAKE_GENERATOR_NINJA"
         print("Section  : {}".format(section))
 
         # parse a section
-        print("-" * 40)
-        print("Execute Parser")
-        print("-" * 40)
-        data = parser.parse_section(section)
+        self._execute_parser(parser, section)
 
-        # pretty print the output
-        print("-" * 40)
-        print("Data")
-        print("-" * 40)
-        pprint(data, width=120)
-
-        # pretty print the loginfo
-        print("-" * 40)
-        print("LogInfo")
-        print("-" * 40)
-        parser._loginfo_print()
         print("-----[ TEST END ]------------------------------------------")
 
         print("OK")
@@ -129,12 +114,7 @@ class SetProgramOptionsTestCMake(TestCase):
         Runs a check that loads the filename using `inifilepath` property
         rather than the parameter in the c'tor.
         """
-        print("\n")
-        print("Load file: {}".format(self._filename))
-        parser = SetProgramOptionsCMake()
-        parser.debug_level = 5
-        parser.exception_control_level = 4
-        parser.exception_control_compact_warnings = False
+        parser = self._create_standard_parser(filename=None)
         parser.inifilepath = self._filename
 
         print("-----[ TEST BEGIN ]----------------------------------------")
@@ -156,34 +136,14 @@ class SetProgramOptionsTestCMake(TestCase):
         """
         Test the ``gen_option_list`` method using the ``bash`` generator.
         """
-        print("\n")
-        print("Load file: {}".format(self._filename))
-        parser = SetProgramOptionsCMake(self._filename)
-        parser.debug_level = 5
-        parser.exception_control_level = 4
-        parser.exception_control_compact_warnings = False
+        parser = self._create_standard_parser()
 
         print("-----[ TEST BEGIN ]----------------------------------------")
         section = "TRILINOS_CONFIGURATION_ALPHA"
         print("Section  : {}".format(section))
 
         # parse a section
-        print("-" * 40)
-        print("Execute Parser")
-        print("-" * 40)
-        data = parser.parse_section(section)
-
-        # pretty print the output
-        print("-" * 40)
-        print("Data")
-        print("-" * 40)
-        pprint(data, width=120)
-
-        # pretty print the loginfo
-        print("-" * 40)
-        print("LogInfo")
-        print("-" * 40)
-        parser._loginfo_print()
+        self._execute_parser(parser, section)
 
         print("-" * 40)
         print("Option List")
@@ -211,38 +171,71 @@ class SetProgramOptionsTestCMake(TestCase):
         return 0
 
 
+    def test_SetProgramOptionsCMake_gen_option_list_bash_expandvars(self):
+        """
+        Test the ``gen_option_list`` method using the ``bash`` generator.
+        """
+        parser = self._create_standard_parser()
+
+        print("-----[ TEST BEGIN ]----------------------------------------")
+        section = "TEST_VAR_EXPANSION_UPDATE_01"
+        print("Section  : {}".format(section))
+
+        # parse a section
+        self._execute_parser(parser, section)
+
+        print("-" * 40)
+        print("Option List")
+        print("-" * 40)
+        option_list_expect = ['cmake',
+                              '-DCMAKE_CXX_FLAGS:STRING="${LDFLAGS} -foo"',
+                              '-DCMAKE_CXX_FLAGS:STRING="${LDFLAGS} -foo -bar"',
+                               ]
+
+        option_list_actual = parser.gen_option_list(section, generator="bash")
+        pprint(option_list_actual, width=200)
+
+        self.assertListEqual(option_list_expect, option_list_actual)
+        print("-----[ TEST END ]------------------------------------------")
+
+        print("OK")
+        return 0
+
+
+    def test_SetProgramOptionsCMake_gen_option_list_bash_expandvars_with_unknown_cmake_var(self):
+        """
+        Test the ``gen_option_list`` method using the ``bash`` generator.
+        """
+        parser = self._create_standard_parser()
+
+        print("-----[ TEST BEGIN ]----------------------------------------")
+        section = "TEST_VAR_EXPANSION_UPDATE_02"
+        print("Section  : {}".format(section))
+
+        # parse a section
+        self._execute_parser(parser, section)
+
+        with self.assertRaises(ValueError):
+            parser.gen_option_list(section, generator="bash")
+
+        print("-----[ TEST END ]------------------------------------------")
+
+        print("OK")
+        return 0
+
+
     def test_SetProgramOptionsCMake_gen_option_list_cmake_fragment(self):
         """
         Test the ``gen_option_list`` method using the ``cmake_fragment`` generator.
         """
-        print("\n")
-        print("Load file: {}".format(self._filename))
-        parser = SetProgramOptionsCMake(self._filename)
-        parser.debug_level = 5
-        parser.exception_control_level = 4
-        parser.exception_control_compact_warnings = False
+        parser = self._create_standard_parser()
 
         print("-----[ TEST BEGIN ]----------------------------------------")
         section = "TRILINOS_CONFIGURATION_ALPHA"
         print("Section  : {}".format(section))
 
         # parse a section
-        print("-" * 40)
-        print("Execute Parser")
-        print("-" * 40)
-        data = parser.parse_section(section)
-
-        # pretty print the output
-        print("-" * 40)
-        print("Data")
-        print("-" * 40)
-        pprint(data, width=120)
-
-        # pretty print the loginfo
-        print("-" * 40)
-        print("LogInfo")
-        print("-" * 40)
-        parser._loginfo_print()
+        self._execute_parser(parser, section)
 
         print("-" * 40)
         print("Option List")
@@ -269,37 +262,51 @@ class SetProgramOptionsTestCMake(TestCase):
         return 0
 
 
+    def test_SetProgramOptionsCMake_gen_option_list_cmake_fragment_expandvars(self):
+        """
+        Test the ``gen_option_list`` method using the ``bash`` generator.
+        """
+        parser = self._create_standard_parser()
+
+        print("-----[ TEST BEGIN ]----------------------------------------")
+        section = "TEST_VAR_EXPANSION_UPDATE_02"
+        print("Section  : {}".format(section))
+
+        # parse a section
+        self._execute_parser(parser, section)
+
+        parser.gen_option_list(section, generator="cmake_fragment")
+
+        option_list_expect = [
+            'set(CMAKE_CXX_FLAGS "$ENV{LDFLAGS} -foo" CACHE STRING "from .ini configuration")',
+            'set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -bar" CACHE STRING "from .ini configuration")',
+            'set(CMAKE_F90_FLAGS "${CMAKE_F90_FLAGS} -baz" CACHE STRING "from .ini configuration")'
+        ]
+
+        option_list_actual = parser.gen_option_list(section, generator="cmake_fragment")
+
+        print("Expected Output:\n{}\n".format("\n".join(option_list_expect)))
+        print("Actual Output:\n{}\n".format("\n".join(option_list_actual)))
+
+        self.assertListEqual(option_list_expect, option_list_actual)
+
+        print("-----[ TEST END ]------------------------------------------")
+
+        print("OK")
+        return 0
+
+
     def test_SetProgramOptionsCMake_param_order_01(self):
         """
         """
-        print("\n")
-        print("Load file: {}".format(self._filename))
-        parser = SetProgramOptionsCMake(self._filename)
-        parser.debug_level = 5
-        parser.exception_control_level = 4
-        parser.exception_control_compact_warnings = False
+        parser = self._create_standard_parser()
 
         print("-----[ TEST BEGIN ]----------------------------------------")
         section = "TEST_CMAKE_CACHE_PARAM_ORDER"
         print("Section  : {}".format(section))
 
         # parse a section
-        print("-" * 40)
-        print("Execute Parser")
-        print("-" * 40)
-        data = parser.parse_section(section)
-
-        # pretty print the output
-        print("-" * 40)
-        print("Data")
-        print("-" * 40)
-        pprint(data, width=120)
-
-        # pretty print the loginfo
-        print("-" * 40)
-        print("LogInfo")
-        print("-" * 40)
-        parser._loginfo_print()
+        self._execute_parser(parser, section)
 
         option_list_bash_expect = [
             '-DCMAKE_VAR_A=ON',
@@ -351,34 +358,14 @@ class SetProgramOptionsTestCMake(TestCase):
     def test_SetProgramOptionsCMake_param_order_02(self):
         """
         """
-        print("\n")
-        print("Load file: {}".format(self._filename))
-        parser = SetProgramOptionsCMake(self._filename)
-        parser.debug_level = 5
-        parser.exception_control_level = 4
-        parser.exception_control_compact_warnings = False
+        parser = self._create_standard_parser()
 
         print("-----[ TEST BEGIN ]----------------------------------------")
         section = "TEST_CMAKE_CACHE_PARAM_TEST_02"
         print("Section  : {}".format(section))
 
         # parse a section
-        print("-" * 40)
-        print("Execute Parser")
-        print("-" * 40)
-        data = parser.parse_section(section)
-
-        # pretty print the output
-        print("-" * 40)
-        print("Data")
-        print("-" * 40)
-        pprint(data, width=120)
-
-        # pretty print the loginfo
-        print("-" * 40)
-        print("LogInfo")
-        print("-" * 40)
-        parser._loginfo_print()
+        self._execute_parser(parser, section)
 
         option_list_bash_expect = [
             '-DCMAKE_VAR_A=ON'
@@ -391,6 +378,53 @@ class SetProgramOptionsTestCMake(TestCase):
         print("OK")
         return
 
+
+    def _create_standard_parser(self,
+                                filename=DEFAULT_VALUE(),
+                                debug_level=5,
+                                ece_level=4,
+                                ece_compact=False):
+        if isinstance(filename, DEFAULT_VALUE):
+            filename = self._filename
+
+        output = None
+
+        if filename is not None:
+            print("\n")
+            print("filename: {}".format(filename))
+            output = SetProgramOptionsCMake(filename)
+        else:
+            output = SetProgramOptionsCMake()
+
+        output.debug_level = debug_level
+        output.exception_control_level = ece_level
+        output.exception_control_compact_warnings = ece_compact
+
+        return output
+
+
+    def _execute_parser(self, parser, section):
+        output = None
+
+        # parse a section
+        print("-" * 40)
+        print("Execute Parser")
+        print("-" * 40)
+        output = parser.parse_section(section)
+
+        # pretty print the output
+        print("-" * 40)
+        print("Output")
+        print("-" * 40)
+        pprint(output, width=120)
+
+        # pretty print the loginfo
+        print("-" * 40)
+        print("LogInfo")
+        print("-" * 40)
+        parser._loginfo_print()
+
+        return output
 
 
 # TEST_CMAKE_CACHE_PARAM_TEST_02

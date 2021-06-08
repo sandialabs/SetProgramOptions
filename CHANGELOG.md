@@ -27,6 +27,8 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
     which would be part of the internal state. This mostly makes sense when generating
     CMake Fragments, but we also attempt to track variables that are set when generating
     BASH output and will perform expansions when a prevoulsly set value is known.
+  - A `ValueError` will be raised if "BASH" output generation is attempted with a "CMAKE"
+    var type still embedded in the .ini file.
 #### Changed
 - _values_ containing spaces in them will have double quotes (`"`) added to them.
 #### Deprecated
