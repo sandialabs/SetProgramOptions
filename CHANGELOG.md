@@ -19,6 +19,14 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [0.2.X] - <!-- YYYY-MM-DD or --> [Unreleased]
 #### Added
+- `common.py` - moved some free-functions to this.
+- Improved *variable* processing. Variables should now be encoded in our pseudo-langauge
+  that has a syntax like this: `${VARNAME|VARTYPE}`.
+  - `ENV` - is the only 'type' that is known to `SetProgramOptions`
+  - `CMAKE` - is known to `SetProgramOptionsCMake`, which denotes a "CMake" variable
+    which would be part of the internal state. This mostly makes sense when generating
+    CMake Fragments, but we also attempt to track variables that are set when generating
+    BASH output and will perform expansions when a prevoulsly set value is known.
 #### Changed
 - _values_ containing spaces in them will have double quotes (`"`) added to them.
 #### Deprecated
