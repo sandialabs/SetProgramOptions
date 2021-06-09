@@ -18,22 +18,22 @@ classifiers = [
 packages = [
     { include = 'setprogramoptions' }
 ]
-include = [ "CHANGELOG.md" ]
+# include = [ "CHANGELOG.md" ]
 
 
 [tool.poetry.dependencies]
 python = "^3.6"
-configparser = "^5.0.1"
+configparser = "^5.0"
 configparserenhanced = {git = "https://gitlab-ex.sandia.gov/trilinos-devops-consolidation/code/ConfigParserEnhanced.git", rev = "master"}
 
 
 [tool.poetry.dev-dependencies]
-mock = "^4.0.3"
-pytest = "^6.2.2"
-pytest-cov = "^2.11.1"
-Sphinx = "^3.5.1"
-sphinx-argparse = "^0.2.5"
-sphinx-rtd-theme = "^0.5.1"
+mock = "^4.0"
+pytest = "^6.2"
+pytest-cov = "^2.11"
+Sphinx = "^3.5"
+sphinx-argparse = "^0.2"
+sphinx-rtd-theme = "^0.5"
 
 
 [build-system]
