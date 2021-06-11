@@ -181,7 +181,6 @@ class SetProgramOptionsTestCMake(TestCase):
         section = "TEST_VAR_EXPANSION_UPDATE_01"
         print("Section  : {}".format(section))
 
-        # parse a section
         self._execute_parser(parser, section)
 
         print("-" * 40)
@@ -198,6 +197,26 @@ class SetProgramOptionsTestCMake(TestCase):
         self.assertListEqual(option_list_expect, option_list_actual)
         print("-----[ TEST END ]------------------------------------------")
 
+        print("-----[ TEST BEGIN ]----------------------------------------")
+        section = "TEST_VAR_EXPANSION_UPDATE_03"
+        print("Section  : {}".format(section))
+
+        self._execute_parser(parser, section)
+
+        print("-" * 40)
+        print("Option List")
+        print("-" * 40)
+        option_list_expect = ['cmake',
+                              '-DCMAKE_CXX_FLAGS:STRING="${LDFLAGS} -foo"',
+                              '-DCMAKE_CXX_FLAGS:STRING="${LDFLAGS} -foo -bar"',
+                              '-DCMAKE_CXX_FLAGS:STRING="${LDFLAGS} -foo -bar -bif"',
+                               ]
+
+        option_list_actual = parser.gen_option_list(section, generator="bash")
+        pprint(option_list_actual, width=200)
+
+        self.assertListEqual(option_list_expect, option_list_actual)
+        print("-----[ TEST END ]------------------------------------------")
         print("OK")
         return 0
 
