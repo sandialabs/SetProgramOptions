@@ -22,9 +22,9 @@ INI File Format
 A **.ini** file that can be processed by `SetProgramOptions` can be formatted like this:
 ```ini
 [COMMAND_LS]
-opt-set ls 
+opt-set ls
 ```
-This is perhaps the most simple thing we could do. Using `gen_option_list('COMMAND_LS', generator="bash")` 
+This is perhaps the most simple thing we could do. Using `gen_option_list('COMMAND_LS', generator="bash")`
 would generate the command `ls` from this.
 
 A more complex section which creates a CMake command call might look like this:
@@ -106,7 +106,7 @@ Operations Explained
 The `use` operation is provided by `ConfigParserEnhanced`. Please see its documentation on this command and its use.
 
 ### `opt-set`
-Sets a generic _command line_ style option. 
+Sets a generic _command line_ style option.
 
 The format of this is `opt-set Param1 [Param2] [Param3] ... [ParamN] : [VALUE]`
 
@@ -121,16 +121,62 @@ _Removes_ existing entries that have been processed up to the point the `opt-rem
 The format of this is `opt-remove Param [SUBSTR]`
 
 When a _remove_ is encountered, `SetProgramOptions` will search through all processed options and will delete any
-that contain any _Param-i_ that matches `Param`. By default the parameters much be an _exact match_ of `Param`, but 
-if the optional `SUBSTR` parameter is provided then `SetProgramOptions` will treat `Param` as a substing and will 
+that contain any _Param-i_ that matches `Param`. By default the parameters much be an _exact match_ of `Param`, but
+if the optional `SUBSTR` parameter is provided then `SetProgramOptions` will treat `Param` as a substing and will
 remove all existing options if _any parameter contains Param_.
 
 
 SetProgramOptions Examples
 --------------------------
-TODO
 
+### `Example-01.ini`
+```ini
+[BASH_VERSION]
+opt-set bash
+opt-set --version
 
+[LS_COMMAND]
+opt-set ls
+
+[LS_LIST_TIME_REVERSED]
+opt-set "-l -t -r"
+
+[LS_CUSTOM_TIME_STYLE]
+opt-set --time-style : "+%Y-%m-%d %H:%M:%S"
+
+[MY_LS_COMMAND]
+use LS_COMMAND
+use LS_LIST_TIME_REVERSED
+use LS_CUSTOM_TIME_STYLE
+```
+
+### `Example-01.py`
+
+```python
+#!/usr/bin/env python3
+import setprogramoptions
+
+filename = "example-01.ini"
+section  = "MY_LS_COMMAND"
+
+# Create SetProgramOptions instance
+popts = setprogramoptions.SetProgramOptions(filename)
+
+# Parse section
+popts.parse_section(section)
+
+# Generate the list of bash options for the command
+bash_options = popts.gen_option_list(section, generator="bash")
+
+# Print out the commands
+print(" ".join(bash_options))
+```
+
+generates the output:
+
+```bash
+ls -l -t -r --time-style="+%Y-%m-%d %H:%M:%S"
+```
 
 SetProgramOptionsCMake
 ======================
@@ -169,3 +215,4 @@ TODO
 SetProgramOptionsCMake Examples
 -------------------------------
 TODO
+
