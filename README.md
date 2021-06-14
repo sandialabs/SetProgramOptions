@@ -129,7 +129,7 @@ remove all existing options if _any parameter contains Param_.
 SetProgramOptions Examples
 --------------------------
 
-### `Example-01.ini`
+### [example-01.ini](examples/example-01.ini)
 ```ini
 [BASH_VERSION]
 opt-set bash
@@ -150,7 +150,7 @@ use LS_LIST_TIME_REVERSED
 use LS_CUSTOM_TIME_STYLE
 ```
 
-### `Example-01.py`
+### [example-02.py](examples/example-01.py)
 
 ```python
 #!/usr/bin/env python3
@@ -291,7 +291,7 @@ be provided in the `opt-set-cmake-var` operation in the .ini file:
 SetProgramOptionsCMake Examples
 -------------------------------
 
-### `Example-02.ini`
+### [example-02.ini](examples/example-02.ini)
 ```ini
 [CMAKE_COMMAND]
 opt-set cmake
@@ -324,7 +324,7 @@ use MYPROJ_SOURCE_DIR
 
 ```
 
-### `Example-02.py`
+### [example-01.py](examples/example-01.py)
 ```python
 #!/usr/bin/env python3
 import os
