@@ -14,7 +14,7 @@ and adds some of its own.
 | ------------ | --------------------------------------------- | ---------------------- |
 | `use`        | `use <section>`                               | `ConfigParserEnhanced` |
 | `opt-set`    | `opt-set Param1 [Param2..ParamN] [: <VALUE>]` | `SetProgramOptions`    |
-| `opt-remove` | `opt-remove Param [SUBSTR]`                    | `SetProgramOptions`    |
+| `opt-remove` | `opt-remove Param [SUBSTR]`                   | `SetProgramOptions`    |
 
 
 INI File Format
@@ -36,7 +36,7 @@ opt-set -D CMAKE_CXX_FLAGS : "-O3"
 ```
 and this would generate the command `cmake -G=Ninja -DCMAKE_CXX_FLAGS="-O3"` when processed for _bash_ output.
 
-We can further exand the CMake example with multiple sections, such as:
+We can further epxand the CMake example with multiple sections, such as:
 
 ```ini
 [CMAKE_COMMAND]
@@ -63,9 +63,9 @@ use APPLICATION_PATH_TO_SOURCE
 use APPLICATION_PROFILE_01
 opt-remove MYAPP_FLAG2
 ```
-this example is fairly simple but follows a pattern that larger projects might wish to follow when there
+This example is fairly simple but follows a pattern that larger projects might wish to follow when there
 are many configurations that may be getting tested. In this case we set up some common option groups and
-then create aggregation sections that will include the other sectiosn to compose a full command line.
+then create aggregation sections that will include the other sections to compose a full command line.
 
 If we generate _bash_ output for `APPLICATION_CMAKE_PROFILE_01` we'll get
 `cmake -G=Ninja -DCMAKE_CXX_FLAGS="-fopenmp" -DMYAPP_FLAG1="foo" -DMYAPP_FLAG2="bar" /path/to/source/.`
@@ -75,7 +75,7 @@ _removes_ any entry containing the parameter `MYAPP_FLAG2`. This will result in 
 `cmake -G=Ninja -DCMAKE_CXX_FLAGS="-fopenmp" -DMYAPP_FLAG1="foo" /path/to/source/.`.
 
 Hopefully, this example shows some of the capabilities that `SetProgramOptions` provides for managing
-many build configurations within a single *.ini* file.
+many build configurations within a single .ini file.
 
 
 ### Variable Expansion within VALUE fields
@@ -91,10 +91,10 @@ ${VARNAME|VARTYPE}
   as `SetProgramOptionsCMake` define their own types.
 
 We do not provide a **default** type for this because we wish it to be _explicit_ that this
-is a pseudo-type and do not with it to be confused with some specific variable type since that
+is a pseudo-type and do not want it to be confused with some specific variable type since that
 meaning can change depending on the kind of generator being used. For example, `${VARNAME}`
 is an _environment variable_ within a bash context but in a CMake fragment file it would be
-an _internal cmake variable_ and `$ENV{VARNAME}` would be an _environment variable_.
+an _internal CMake variable_ and `$ENV{VARNAME}` would be an _environment variable_.
 By not providing a default we force type consideration to be made explicitly during the creation
 of the .ini file.
 
@@ -122,7 +122,7 @@ The format of this is `opt-remove Param [SUBSTR]`
 
 When a _remove_ is encountered, `SetProgramOptions` will search through all processed options and will delete any
 that contain any _Param-i_ that matches `Param`. By default the parameters much be an _exact match_ of `Param`, but
-if the optional `SUBSTR` parameter is provided then `SetProgramOptions` will treat `Param` as a substing and will
+if the optional `SUBSTR` parameter is provided then `SetProgramOptions` will treat `Param` as a substring and will
 remove all existing options if _any parameter contains Param_.
 
 
@@ -150,7 +150,7 @@ use LS_LIST_TIME_REVERSED
 use LS_CUSTOM_TIME_STYLE
 ```
 
-### [example-02.py](examples/example-01.py)
+### [example-01.py](examples/example-01.py)
 
 ```python
 #!/usr/bin/env python3
@@ -216,11 +216,11 @@ variable is only applicable when generating CMake fragment files.
 It is necessary to provide a CMake variant for variable expansions because the CMake syntax for variables is different than
 that used by Bash. In CMake fragment files:
 - environment variables are written as `$ENV{VARNAME}`
-- internal cmake variables are written as: `${VARNAME}`
+- internal CMake variables are written as: `${VARNAME}`
 
 We can attempt to still allow these to be used if generating _bash_ output but only if it can be resolved to something that
 is known to the calling environment (i.e., either a string or an environment variable). In this case, we cache the _known_ values
-of the VARAIBLE as we process the .ini file and perform substitutions with the _last known value_. An exception shoudl be thrown
+of the VARAIBLE as we process the .ini file and perform substitutions with the _last known value_. An exception should be thrown
 if the generator encounteres an _unhandled_ CMake variable when generating _bash_ output.
 
 For example, to append `-fopenmp` to the `CMAKE_CXX_FLAGS` variable is something one might wish to do:
@@ -255,7 +255,7 @@ or _bash_ options:
 We currently don't try and disambiguate these options internally within `SetProgramOptions`. This is something that is
 left up to the application using the tool. The reason is that in our testing it appears that the _last value wins_ for
 _bash_ commands... but within a CMake script there could be some command that uses the intermediate value of this variable
-and we don't currently perform any sort of def-use tracking. In the future, we may add some def-use awareness that could
+and we don't currently perform any sort of use-def chain tracking. In the future, we may add some use-def awareness that could
 allow some optimization here.
 
 
@@ -266,10 +266,10 @@ This adds a CMake variable program option. These have a special syntax in _bash_
 is an optional parameter. If the *type* is left out then CMake assumes the value is a _STRING_.
 
 We may not wish to generate bash only output though. For CMake files, we might wish to generate a _cmake fragment_ file which is
-basically a snippet of CMake that can be loaded during a cmake call using the `-S` option: `cmake -S cmake_fragment.cmake`. The
-syntax within a cmake fragment file is the same as in a CMake script itself.
+basically a snippet of CMake that can be loaded during a CMake call using the `-S` option: `cmake -S cmake_fragment.cmake`. The
+syntax within a CMake fragment file is the same as in a CMake script itself.
 
-If the back-end generator is creating a cmake fragment file, the _set_ command generated will use [CMake set syntax].
+If the back-end generator is creating a CMake fragment file, the _set_ command generated will use [CMake set syntax].
 This looks something like `set(<variable> <value>)` but can also contain additional options. These extra options can
 be provided in the `opt-set-cmake-var` operation in the .ini file:
 
@@ -284,7 +284,7 @@ be provided in the `opt-set-cmake-var` operation in the .ini file:
     - Valid options for this are `STRING` (default), `BOOL`, `PATH`, `INTERNAL`, `FILEPATH`.
     - Adding a _TYPE_ option implies that the _CACHE_ and _docstring_ parameters will be added to a `set()` command
       in a CMake fragment file according to the syntax: `set(<variable> <value> CACHE <type> <docstring> [FORCE])`
-      as illustrated on the [cmake documentation page][1].
+      as illustrated on the [CMake documentation page][1].
     - This is applicable to both _cmake fragment_ and _bash_ generation.
 
 
@@ -321,10 +321,9 @@ use CMAKE_COMMAND
 use CMAKE_GENERATOR_MAKEFILES
 use MYPROJ_OPTIONS
 use MYPROJ_SOURCE_DIR
-
 ```
 
-### [example-01.py](examples/example-01.py)
+### [example-02.py](examples/example-02.py)
 ```python
 #!/usr/bin/env python3
 import os
