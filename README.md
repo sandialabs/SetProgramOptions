@@ -284,7 +284,7 @@ be provided in the `opt-set-cmake-var` operation in the .ini file:
     - Valid options for this are `STRING` (default), `BOOL`, `PATH`, `INTERNAL`, `FILEPATH`.
     - Adding a _TYPE_ option implies that the _CACHE_ and _docstring_ parameters will be added to a `set()` command
       in a CMake fragment file according to the syntax: `set(<variable> <value> CACHE <type> <docstring> [FORCE])`
-      as illustrated on the [CMake documentation page][1].
+      as illustrated on the [CMake `set()` documentation][1].
     - This is applicable to both _cmake fragment_ and _bash_ generation.
 
 
