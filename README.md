@@ -182,8 +182,8 @@ SetProgramOptionsCMake
 ======================
 `SetProgramOptionsCMake` is a subclass of `SetProgramOptions` that adds additional additional
 operations and generators to handle processing CMake options:
-- Adds `opt-set-cmake-var`
-- Adds `cmake_fragment` generator
+- Adds `opt-set-cmake-var`.
+- Adds `cmake_fragment` generator.
 - Adds `CMAKE` type to variables.
 
 New operations defined in `SetProgramOptionsCMake`:
