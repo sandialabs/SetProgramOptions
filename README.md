@@ -199,20 +199,182 @@ A **.ini** file that can be processed by `SetProgramOptions` can be formatted li
 ```ini
 [SECTION_A]
 opt-set cmake
-
-TOOD: FINISH THIS README!
+opt-set-cmake-var MYVARIABLENAME  : VALUE
+opt-set-cmake-var MYVARIABLENAME2 PARENT_SCOPE : VALUE
 ```
+
+### Variable Expansion for CMake Variables
+`SetProgramOptionsCMake` extends the variable expansion options provided by `SetProgramOptions` by adding a new _vartype_: `CMAKE`
+which designates a variable as a "CMake variable":
+```
+${VARNAME|CMAKE}
+```
+A _CMake variable_ in this context would be an _internal variable_ that is known to CMake.
+Because this is not a variable that would be known outside of the context of `.cmake` files, this kind of
+variable is only applicable when generating CMake fragment files.
+
+It is necessary to provide a CMake variant for variable expansions because the CMake syntax for variables is different than
+that used by Bash. In CMake fragment files:
+- environment variables are written as `$ENV{VARNAME}`
+- internal cmake variables are written as: `${VARNAME}`
+
+We can attempt to still allow these to be used if generating _bash_ output but only if it can be resolved to something that
+is known to the calling environment (i.e., either a string or an environment variable). In this case, we cache the _known_ values
+of the VARAIBLE as we process the .ini file and perform substitutions with the _last known value_. An exception shoudl be thrown
+if the generator encounteres an _unhandled_ CMake variable when generating _bash_ output.
+
+For example, to append `-fopenmp` to the `CMAKE_CXX_FLAGS` variable is something one might wish to do:
+```ini
+opt-set-cmake-var CMAKE_CXX_FLAGS : "${CMAKE_CXX_FLAGS|CMAKE} -fopenmp"
+```
+which is perfectly fine if we're generating a CMake fragment file:
+```cmake
+set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -fopenmp")
+```
+but if the generator is Bash, it has no idea what to put in the `-D` option... we can't use `${CMAKE_CXX_FLAGS}` because
+bash will think this is an _environment variable_. In this case, if `CMAKE_CXX_FLAGS` had already been set to something
+known then we can handle it. For example:
+```ini
+[COMMON_FLAGS]
+opt-set-cmake-var CMAKE_CXX_FLAGS FORCE : "-O0 -g"
+# ... many lines later ...
+[SOME_CONFIGURATION]
+use COMMON_FLAGS
+opt-set-cmake-var CMAKE_CXX_FLAGS FORCE : "${CMAKE_CXX_FLAGS|CMAKE} -fopenmp"
+```
+might generate this _cmake fragment_:
+```cmake
+set(CMAKE_CXX_FLAGS "-O0 -g" FORCE)
+set(CMAKE_CXX_FLAGS "-O0 -g -fopenmp" FORCE)
+```
+or _bash_ options:
+```bash
+-DCMAKE_CXX_FLAGS="-O0 -g"
+-DCMAKE_CXX_FLAGS="-O0 -g -fopenmp"
+```
+We currently don't try and disambiguate these options internally within `SetProgramOptions`. This is something that is
+left up to the application using the tool. The reason is that in our testing it appears that the _last value wins_ for
+_bash_ commands... but within a CMake script there could be some command that uses the intermediate value of this variable
+and we don't currently perform any sort of def-use tracking. In the future, we may add some def-use awareness that could
+allow some optimization here.
 
 
 Operations Explained
 --------------------
-
-
 ### `opt-set-cmake-var`
-TODO
+This adds a CMake variable program option. These have a special syntax in _bash_ that looks like `-DVARNAME:TYPE=VALUE` where the `:TYPE`
+is an optional parameter. If the *type* is left out then CMake assumes the value is a _STRING_.
+
+We may not wish to generate bash only output though. For CMake files, we might wish to generate a _cmake fragment_ file which is
+basically a snippet of CMake that can be loaded during a cmake call using the `-S` option: `cmake -S cmake_fragment.cmake`. The
+syntax within a cmake fragment file is the same as in a CMake script itself.
+
+If the back-end generator is creating a cmake fragment file, the _set_ command generated will use [CMake set syntax].
+This looks something like `set(<variable> <value>)` but can also contain additional options. These extra options can
+be provided in the `opt-set-cmake-var` operation in the .ini file:
+
+- `FORCE` -
+    - By default, a `set()` operation does not overwrite entries in a CMake file. This can be added to
+      _force_ the value to be saved.
+    - This is only applicable to generating _cmake fragment_ files.
+- `PARENT_SCOPE` - If provided, this option instructs CMake to set the variable in the scope that is above the current scope.
+    - This is only applicable to generating _cmake fragment_ files.
+- `TYPE` - Specifies the _TYPE_ the variable can be.
+    - This is a _positional_ argument and must always come after _VARNAME_.
+    - Valid options for this are `STRING` (default), `BOOL`, `PATH`, `INTERNAL`, `FILEPATH`.
+    - Adding a _TYPE_ option implies that the _CACHE_ and _docstring_ parameters will be added to a `set()` command
+      in a CMake fragment file according to the syntax: `set(<variable> <value> CACHE <type> <docstring> [FORCE])`
+      as illustrated on the [cmake documentation page][1].
+    - This is applicable to both _cmake fragment_ and _bash_ generation.
 
 
 SetProgramOptionsCMake Examples
 -------------------------------
-TODO
 
+### `Example-02.ini`
+```ini
+[CMAKE_COMMAND]
+opt-set cmake
+
+[CMAKE_GENERATOR_NINJA]
+opt-set -G : Ninja
+
+[CMAKE_GENERATOR_MAKEFILES]
+opt-set -G : "Unix Makefiles"
+
+[MYPROJ_OPTIONS]
+opt-set-cmake-var  MYPROJ_CXX_FLAGS                         : "-O0 -fopenmp"
+opt-set-cmake-var  MYPROJ_ENABLE_OPTION_A BOOL FORCE        : ON
+opt-set-cmake-var  MYPROJ_ENABLE_OPTION_B BOOL PARENT_SCOPE : ON
+
+[MYPROJ_SOURCE_DIR]
+opt-set /path/to/source/dir
+
+[MYPROJ_CONFIGURATION_NINJA]
+use CMAKE_COMMAND
+use CMAKE_GENERATOR_NINJA
+use MYPROJ_OPTIONS
+use MYPROJ_SOURCE_DIR
+
+[MYPROJ_CONFIGURATION_MAKEFILES]
+use CMAKE_COMMAND
+use CMAKE_GENERATOR_MAKEFILES
+use MYPROJ_OPTIONS
+use MYPROJ_SOURCE_DIR
+
+```
+
+### `Example-02.py`
+```python
+#!/usr/bin/env python3
+import os
+import sys
+
+import setprogramoptions
+
+filename = "example-02.ini"
+popts = setprogramoptions.SetProgramOptionsCMake(filename)
+
+section  = "MYPROJ_CONFIGURATION_NINJA"
+popts.parse_section(section)
+
+# Generate BASH output
+print("")
+print("Bash output")
+print("-----------")
+bash_options = popts.gen_option_list(section, generator="bash")
+print(" \\\n   ".join(bash_options))
+
+# Generate a CMake Fragment
+print("")
+print("CMake fragment output")
+print("---------------------")
+cmake_options = popts.gen_option_list(section, generator="cmake_fragment")
+print("\n".join(cmake_options))
+
+print("\nDone")
+```
+Generates the output:
+```bash
+$ python3 example-02.py
+
+Bash output
+-----------
+cmake \
+   -G=Ninja \
+   -DMYPROJ_CXX_FLAGS="-O0 -fopenmp" \
+   -DMYPROJ_ENABLE_OPTION_A:BOOL=ON \
+   -DMYPROJ_ENABLE_OPTION_B:BOOL=ON \
+   /path/to/source/dir
+
+CMake fragment output
+---------------------
+set(MYPROJ_CXX_FLAGS "-O0 -fopenmp")
+set(MYPROJ_ENABLE_OPTION_A ON CACHE BOOL "from .ini configuration" FORCE)
+set(MYPROJ_ENABLE_OPTION_B ON CACHE BOOL "from .ini configuration" PARENT_SCOPE)
+
+Done
+```
+
+
+[1]: https://cmake.org/cmake/help/latest/command/set.html
