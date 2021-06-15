@@ -21,6 +21,9 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 ## [Unreleased]
 #### Added
 #### Changed
+- Relocated `setprogramoptions` package to `src/`
+- Relocated _examples_ into `examples/` directory.
+- Improved `gitlab-ci.yml` pipeline.
 #### Deprecated
 #### Removed
 #### Fixed

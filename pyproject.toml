@@ -16,9 +16,14 @@ classifiers = [
     'Programming Language :: Python :: 3 :: Only',
 ]
 packages = [
-    { include = 'setprogramoptions' }
+    { include = 'setprogramoptions', from = 'src' }
 ]
 # include = [ "CHANGELOG.md" ]
+
+
+[tool.poetry.urls]
+CI = "https://gitlab-ex.sandia.gov/trilinos-devops-consolidation/code/SetProgramOptions/-/pipelines"
+Issues = "https://gitlab-ex.sandia.gov/trilinos-devops-consolidation/code/SetProgramOptions/-/issues"
 
 
 [tool.poetry.dependencies]
@@ -34,6 +39,15 @@ pytest-cov = "^2.11"
 Sphinx = "^3.5"
 sphinx-argparse = "^0.2"
 sphinx-rtd-theme = "^0.5"
+
+
+[tool.black]
+line-length = 120
+target-version = ["py36"]
+
+
+[tool.pycodestyle]
+statistics = true
 
 
 [build-system]

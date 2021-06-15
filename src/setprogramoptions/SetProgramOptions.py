@@ -48,27 +48,26 @@ Option entries are removed according to the rules:
 :Authors:
     - William C. McLendon III <wcmclen@sandia.gov>
 """
-from __future__ import print_function
-
-#import inspect
-#from pathlib import Path
-#from textwrap import dedent
 
 # For type-hinting
 from typing import Dict,Iterable,List,Optional,Set,Tuple,Union
 
-try:                  # pragma: no cover
+try:                                                                              # pragma: no cover
     # @final decorator, requires Python 3.8.x
     from typing import final
-except ImportError:   # pragma: no cover
+except ImportError:                                                               # pragma: no cover
     pass
 
 import copy
 import dataclasses
-from pathlib import Path
-from pprint import pprint
+#from pathlib import Path
+#from pprint import pprint
 import re
-import shlex
+import sys
+
+MIN_PYTHON=(3,6)
+if sys.version_info < MIN_PYTHON:                                                 # pragma: no cover
+    sys.exit("Python %s.%s or later is required.\n"%(MIN_PYTHON))
 
 from configparserenhanced import *
 

@@ -3,11 +3,9 @@
 """
 Example app for SetProgramOptions
 """
-from __future__ import print_function  # python 2 -> 3 compatiblity
-
 import os
 from pprint import pprint
-import re
+
 
 import setprogramoptions
 
@@ -45,22 +43,10 @@ def test_setprogramoptions(filename="config.ini"):
     print("")
 
     parser = setprogramoptions.SetProgramOptionsCMake(filename=filename)
-    parser.debug_level = 5
+    parser.debug_level = 0
     parser.exception_control_level = 4
     parser.exception_control_compact_warnings = True
 
-    # pre-parse all sections
-    # parser.parse_all_sections()
-
-    #section_name = "TEST_CONFIGURATION_A"
-    #section_name = "TEST_CONFIGURATION_D"
-    section_name = "TRILINOS_CONFIGURATION_ALPHA"
-    #section_name = "TEST_CMAKE_CACHE_PARAM_ORDER"
-    section_name = "TEST_EXPANSION_IN_ARGUMENT"
-    section_name = "TEST_SPACES_IN_VALUE"
-    section_name = "TEST_SPACES_AND_EXPANSION"
-    #section_name = "TEST_VARIABLE_EXPANSION_IN_CMAKE_VAR"
-    #section_name = "TEST_SECTION"
     section_name = "TEST_VAR_EXPANSION_UPDATE_01"
 
     parse_section(parser, section_name)
@@ -75,8 +61,6 @@ def test_setprogramoptions(filename="config.ini"):
     print("-----------")
     option_list = parser.gen_option_list(section_name, generator="bash")
     print( " \\\n    ".join(option_list) )
-
-    # generate CMake fragment
 
     print("")
     print("CMake Fragment")
@@ -94,21 +78,19 @@ def test_setprogramoptions(filename="config.ini"):
 
 def parse_section(parser, section):
 
-    # Test out something that might be experimental
-    experimental(parser, section)
-
-    #data = parser.parse_section(section)
     data = parser.configparserenhanceddata[section]
 
     print("\nData")
     print("----")
     pprint(data, width=120)
 
-    # Print the loginfo from the last search
+    # Print the loginfo from the last search (change if to True to enable)
     if(False):
         print("\nLogInfo")
         print("-------")
         #parser._loginfo_print(pretty=True)
+
+        # Filter out just the entry and exits for handlers
         handler_list = [ (d['type'], d['name']) for d in parser._loginfo if d['type'] in ['handler-entry','handler-exit']]
         pprint(handler_list, width=120)
 
@@ -116,22 +98,14 @@ def parse_section(parser, section):
 
 
 
-def experimental(parser, section):
-    #text = "foo ${bar}-${baz|CMAKE}-${bif|ENV} XXa"
-    #print("old:", text)
-    #print("new:", new_str)
-    return 0
-
-
-
 def main():
     """
     main app
     """
-    fname_ini = "config_test_setprogramoptions.ini"
+    fname_ini = "example-03.ini"
     fpath_ini = find_config_ini(filename=fname_ini)
-
     test_setprogramoptions(filename=fpath_ini)
+    return 0
 
 
 
