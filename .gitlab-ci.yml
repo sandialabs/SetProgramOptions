@@ -1,70 +1,94 @@
 stages:
+  - prepare
   - test
   - deploy
-  - make_docs
+  - examples
+  - documentation
   - publish
+  - cleanup
+
 
 before_script:
   # display centos version
   - cat /etc/issue
-  # - git config user.email
 
-  # Pull required packages
-  - python3 -m pip install pytest pytest-cov
 
-  # Get ConfigParserEnhanced
-  # See https://pip.pypa.io/en/stable/reference/pip_install/#git : useful data on how to format this link
-  #     https://stackoverflow.com/a/35998253/2059999 : also useful for some info on how to write the target
-  - python3 -m pip uninstall -y configparserenhanced
-  # make sure this wasn't installed somewhere?
-  - python3 -m pip uninstall -y setprogramoptions
-  - python3 -m pip install --user git+https://gitlab+deploy-token-CI:${CI_GROUP_READ_TOKEN}@gitlab-ex.sandia.gov/trilinos-devops-consolidation/code/ConfigParserEnhanced.git@master#egg=configparserenhanced
-  # Methods that work on the command line but not in CI.
-  # - python3 -m pip install --user -r requirements.txt
+install_requirements:
+  stage: prepare
+  script:
+    # Remove setprogramoptions if it's been installed
+    - python3 -m pip uninstall -y setprogramoptions
 
-pytest:
+    # Pull required packages
+    - python3 -m pip install -r requirements.txt -r requirements-test.txt -r doc/requirements.txt
+
+    # Get ConfigParserEnhanced
+    # See https://pip.pypa.io/en/stable/reference/pip_install/#git : useful data on how to format this link
+    #     https://stackoverflow.com/a/35998253/2059999 : also useful for some info on how to write the target
+    #- python3 -m pip uninstall -y configparserenhanced
+    #- python3 -m pip install --user git+https://gitlab+deploy-token-CI:${CI_GROUP_READ_TOKEN}@gitlab-ex.sandia.gov/trilinos-devops-consolidation/code/ConfigParserEnhanced.git@master#egg=configparserenhanced
+    # Methods that work on the command line but not in CI.
+    # - python3 -m pip install --user -r requirements.txt
+
+#after_script:
+#  - python3 -m pip uninstall -y setprogramoptions
+#  - python3 -m pip uninstall -y -r requirements.txt
+
+
+unit_tests:
   stage: test
   timeout: 10m
   script:
-    #- bash ./exec-reqs-install.sh
     - python3 -m pytest --cov=setprogramoptions  --cov-report=term --cov-report=html --cov-config=.coveragerc
   coverage: '/TOTAL\s*\d+\s+\d+\s+\d+\s+\d+\s+(\d+%)/'
 
-apptest:
-  stage: test
-  timeout: 10m
-  script:
-    - python3 ./exec-example-SetProgramOptions.py
 
-install:
+build_dist:
   stage: deploy
-  needs: [pytest]
+  needs: [unit_tests]
   script:
-    - python3 -m pip install --user wheel
-    # - python3 -m pip install --user .
-    # - python3 -m pip uninstall -y setprogramoptions configparserenhanced
-    - python3 -m pip wheel --no-deps -w setprogramoptions-dist .
+    - python3 -m pip install wheel
+    - python3 -m pip wheel --no-deps -w dist .
   artifacts:
     name: "setprogramoptions-dist"
     paths:
-      - setprogramoptions-dist/setprogramoptions*.whl
-    expire_in: 2 weeks
+      - dist/setprogramoptions*.whl
+    expire_in: 6 weeks
+
+
+install:
+  stage: deploy
+  script:
+    - python3 -m pip install .
+
+
+examples:
+  stage: examples
+  timeout: 10m
+  script:
+    - cd examples
+    - python3 ./example-01.py
+    - python3 ./example-02.py
+    - python3 ./example-03.py
+
 
 sphinx-documentation:
-  stage: make_docs
+  stage: documentation
   timeout: 20m
   script:
     - cd doc/
     - python3 -m pip install -r requirements.txt
     - bash make_html_docs.sh
 
+
 publish coverage:
   stage: publish
+  #needs: [unit_tests]
   timeout: 20m
   rules:
     - if: '$CI_COMMIT_BRANCH == $CI_DEFAULT_BRANCH'
   script:
-    - python3 -m pytest --cov=setprogramoptions --cov-report=term --cov-report=html --cov-config=.coveragerc
+    #- python3 -m pytest --cov=setprogramoptions --cov-report=term --cov-report=html --cov-config=.coveragerc
     - rm -rf /home/josbrau/html_files/SetProgramOptions/coverage
     - mkdir -p /home/josbrau/html_files/SetProgramOptions/coverage
     - mv tests/htmlcov/* /home/josbrau/html_files/SetProgramOptions/coverage/
@@ -82,5 +106,12 @@ publish docs:
     - mkdir -p /home/josbrau/html_files/SetProgramOptions/doc
     - mv html/* /home/josbrau/html_files/SetProgramOptions/doc/
 
+
+uninstall:
+  stage: cleanup
+  timeout: 20m
+  script:
+    - python3 -m pip uninstall -y setprogramoptions
+    - python3 -m pip uninstall -y -r requirements.txt
 
 
