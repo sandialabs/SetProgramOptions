@@ -41,6 +41,10 @@ unit_tests:
   script:
     - python3 -m pytest --cov=setprogramoptions  --cov-report=term --cov-report=html --cov-config=.coveragerc
   coverage: '/TOTAL\s*\d+\s+\d+\s+\d+\s+\d+\s+(\d+%)/'
+  cache:
+    key: coverage-cache
+    paths:
+      - tests/htmlcov/
 
 
 build_dist:
@@ -83,10 +87,14 @@ sphinx-documentation:
 
 publish coverage:
   stage: publish
-  #needs: [unit_tests]
+  needs: [unit_tests]
   timeout: 20m
   rules:
     - if: '$CI_COMMIT_BRANCH == $CI_DEFAULT_BRANCH'
+  cache:
+    key: coverage-cache
+    paths:
+      - tests/htmlcov/
   script:
     #- python3 -m pytest --cov=setprogramoptions --cov-report=term --cov-report=html --cov-config=.coveragerc
     - rm -rf /home/josbrau/html_files/SetProgramOptions/coverage
