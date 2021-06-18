@@ -41,11 +41,6 @@ sphinx-argparse = "^0.2"
 sphinx-rtd-theme = "^0.5"
 
 
-[tool.black]
-line-length = 120
-target-version = ["py36"]
-
-
 [tool.pycodestyle]
 statistics = true
 
