@@ -4,9 +4,13 @@
 """
 from __future__ import print_function
 import sys
+
+
 sys.dont_write_bytecode = True
 
 import os
+
+
 sys.path.insert(1, os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
 
 from pprint import pprint
@@ -16,10 +20,10 @@ from unittest import TestCase
 
 # Coverage will always miss one of these depending on the system
 # and what is available.
-try:                                                                                                # pragma: no cover
-    import unittest.mock as mock                                                                    # pragma: no cover
-except:                                                                                             # pragma: no cover
-    import mock                                                                                     # pragma: no cover
+try:                             # pragma: no cover
+    import unittest.mock as mock # pragma: no cover
+except:                          # pragma: no cover
+    import mock                  # pragma: no cover
 
 from mock import Mock
 from mock import MagicMock
@@ -37,7 +41,6 @@ from setprogramoptions import *
 
 from .common import *
 
-
 # ===============================================================================
 #
 # General Utility Data
@@ -47,8 +50,10 @@ global_gen_new_ground_truth_files = False
 # global_gen_new_ground_truth_files = True     # comment this out for production.
 
 
+
 class DEFAULT_VALUE(object):
     pass
+
 
 
 # ===============================================================================
@@ -57,19 +62,18 @@ class DEFAULT_VALUE(object):
 #
 # ===============================================================================
 
-
 # ===============================================================================
 #
 # Mock Helpers
 #
 # ===============================================================================
 
-
 # ===============================================================================
 #
 # Tests
 #
 # ===============================================================================
+
 
 
 class SetProgramOptionsTestCMake(TestCase):
@@ -86,7 +90,6 @@ class SetProgramOptionsTestCMake(TestCase):
         unit_test_path = os.path.realpath(__file__)
         self.unit_test_file = os.path.basename(unit_test_path)
         self.unit_test_path = os.path.dirname(unit_test_path)
-
 
     def test_SetProgramOptionsCMake_Template(self):
         """
@@ -107,7 +110,6 @@ class SetProgramOptionsTestCMake(TestCase):
 
         print("OK")
         return 0
-
 
     def test_SetProgramOptionsCMake_property_inifilepath(self):
         """
@@ -131,7 +133,6 @@ class SetProgramOptionsTestCMake(TestCase):
         print("OK")
         return 0
 
-
     def test_SetProgramOptionsCMake_gen_option_list_bash(self):
         """
         Test the ``gen_option_list`` method using the ``bash`` generator.
@@ -148,19 +149,21 @@ class SetProgramOptionsTestCMake(TestCase):
         print("-" * 40)
         print("Option List")
         print("-" * 40)
-        option_list_expect = ['cmake',
-                              '-G=Ninja',
-                              '-DTrilinos_ENABLE_COMPLEX:BOOL=ON',
-                              '-DTrilinos_ENABLE_THREAD_SAFE:BOOL=ON',
-                              '-DTrilinos_PARALLEL_COMPILE_JOBS_LIMIT=20',
-                              '-DTrilinos_PARALLEL_LINK_JOBS_LIMIT=4',
-                              '-DTrilinos_ENABLE_Kokkos:BOOL=ON',
-                              '-DTrilinos_ENABLE_KokkosCore:BOOL=ON',
-                              '-DTrilinos_ENABLE_KokkosKernels:BOOL=ON',
-                              '-DKokkosKernels_ENABLE_EXAMPLES:BOOL=ON',
-                              '-DTrilinos_ENABLE_Tpetra:BOOL=ON',
-                              '-DTpetra_INST_DOUBLE:BOOL=ON',
-                              '/path/to/source/dir']
+        option_list_expect = [
+            'cmake',
+            '-G=Ninja',
+            '-DTrilinos_ENABLE_COMPLEX:BOOL=ON',
+            '-DTrilinos_ENABLE_THREAD_SAFE:BOOL=ON',
+            '-DTrilinos_PARALLEL_COMPILE_JOBS_LIMIT=20',
+            '-DTrilinos_PARALLEL_LINK_JOBS_LIMIT=4',
+            '-DTrilinos_ENABLE_Kokkos:BOOL=ON',
+            '-DTrilinos_ENABLE_KokkosCore:BOOL=ON',
+            '-DTrilinos_ENABLE_KokkosKernels:BOOL=ON',
+            '-DKokkosKernels_ENABLE_EXAMPLES:BOOL=ON',
+            '-DTrilinos_ENABLE_Tpetra:BOOL=ON',
+            '-DTpetra_INST_DOUBLE:BOOL=ON',
+            '/path/to/source/dir'
+        ]
 
         option_list_actual = parser.gen_option_list(section, generator="bash")
         pprint(option_list_actual, width=200)
@@ -169,7 +172,6 @@ class SetProgramOptionsTestCMake(TestCase):
 
         print("OK")
         return 0
-
 
     def test_SetProgramOptionsCMake_gen_option_list_bash_expandvars(self):
         """
@@ -186,10 +188,11 @@ class SetProgramOptionsTestCMake(TestCase):
         print("-" * 40)
         print("Option List")
         print("-" * 40)
-        option_list_expect = ['cmake',
-                              '-DCMAKE_CXX_FLAGS:STRING="${LDFLAGS} -foo"',
-                              '-DCMAKE_CXX_FLAGS:STRING="${LDFLAGS} -foo -bar"',
-                               ]
+        option_list_expect = [
+            'cmake',
+            '-DCMAKE_CXX_FLAGS:STRING="${LDFLAGS} -foo"',
+            '-DCMAKE_CXX_FLAGS:STRING="${LDFLAGS} -foo -bar"',
+        ]
 
         option_list_actual = parser.gen_option_list(section, generator="bash")
         pprint(option_list_actual, width=200)
@@ -206,11 +209,12 @@ class SetProgramOptionsTestCMake(TestCase):
         print("-" * 40)
         print("Option List")
         print("-" * 40)
-        option_list_expect = ['cmake',
-                              '-DCMAKE_CXX_FLAGS:STRING="${LDFLAGS} -foo"',
-                              '-DCMAKE_CXX_FLAGS:STRING="${LDFLAGS} -foo -bar"',
-                              '-DCMAKE_CXX_FLAGS:STRING="${LDFLAGS} -foo -bar -bif"',
-                               ]
+        option_list_expect = [
+            'cmake',
+            '-DCMAKE_CXX_FLAGS:STRING="${LDFLAGS} -foo"',
+            '-DCMAKE_CXX_FLAGS:STRING="${LDFLAGS} -foo -bar"',
+            '-DCMAKE_CXX_FLAGS:STRING="${LDFLAGS} -foo -bar -bif"',
+        ]
 
         option_list_actual = parser.gen_option_list(section, generator="bash")
         pprint(option_list_actual, width=200)
@@ -219,7 +223,6 @@ class SetProgramOptionsTestCMake(TestCase):
         print("-----[ TEST END ]------------------------------------------")
         print("OK")
         return 0
-
 
     def test_SetProgramOptionsCMake_gen_option_list_bash_expandvars_with_unknown_cmake_var(self):
         """
@@ -241,7 +244,6 @@ class SetProgramOptionsTestCMake(TestCase):
 
         print("OK")
         return 0
-
 
     def test_SetProgramOptionsCMake_gen_option_list_cmake_fragment(self):
         """
@@ -280,7 +282,6 @@ class SetProgramOptionsTestCMake(TestCase):
         print("OK")
         return 0
 
-
     def test_SetProgramOptionsCMake_gen_option_list_cmake_fragment_expandvars(self):
         """
         Test the ``gen_option_list`` method using the ``bash`` generator.
@@ -314,7 +315,6 @@ class SetProgramOptionsTestCMake(TestCase):
         print("OK")
         return 0
 
-
     def test_SetProgramOptionsCMake_param_order_01(self):
         """
         """
@@ -343,7 +343,7 @@ class SetProgramOptionsTestCMake(TestCase):
             '-DCMAKE_VAR_M:BOOL=ON',
             '-DCMAKE_VAR_N:BOOL=ON',
             '-DCMAKE_VAR_O:BOOL=ON'
-            ]
+        ]
 
         option_list_bash_actual = parser.gen_option_list(section, generator="bash")
         self.assertListEqual(option_list_bash_expect, option_list_bash_actual)
@@ -364,7 +364,7 @@ class SetProgramOptionsTestCMake(TestCase):
             'set(CMAKE_VAR_M ON CACHE BOOL "from .ini configuration" PARENT_SCOPE FORCE)',
             'set(CMAKE_VAR_N ON CACHE BOOL "from .ini configuration" PARENT_SCOPE FORCE)',
             'set(CMAKE_VAR_O ON CACHE BOOL "from .ini configuration" PARENT_SCOPE FORCE)'
-            ]
+        ]
 
         option_list_cmake_fragment_actual = parser.gen_option_list(section, generator="cmake_fragment")
         self.assertListEqual(option_list_cmake_fragment_expect, option_list_cmake_fragment_actual)
@@ -372,7 +372,6 @@ class SetProgramOptionsTestCMake(TestCase):
 
         print("OK")
         return
-
 
     def test_SetProgramOptionsCMake_param_order_02(self):
         """
@@ -386,9 +385,7 @@ class SetProgramOptionsTestCMake(TestCase):
         # parse a section
         self._execute_parser(parser, section)
 
-        option_list_bash_expect = [
-            '-DCMAKE_VAR_A=ON'
-            ]
+        option_list_bash_expect = ['-DCMAKE_VAR_A=ON']
 
         option_list_bash_actual = parser.gen_option_list(section, generator="bash")
         self.assertListEqual(option_list_bash_expect, option_list_bash_actual)
@@ -397,12 +394,9 @@ class SetProgramOptionsTestCMake(TestCase):
         print("OK")
         return
 
-
-    def _create_standard_parser(self,
-                                filename=DEFAULT_VALUE(),
-                                debug_level=5,
-                                ece_level=4,
-                                ece_compact=False):
+    def _create_standard_parser(
+        self, filename=DEFAULT_VALUE(), debug_level=5, ece_level=4, ece_compact=False
+    ):
         if isinstance(filename, DEFAULT_VALUE):
             filename = self._filename
 
@@ -420,7 +414,6 @@ class SetProgramOptionsTestCMake(TestCase):
         output.exception_control_compact_warnings = ece_compact
 
         return output
-
 
     def _execute_parser(self, parser, section):
         output = None
@@ -444,6 +437,7 @@ class SetProgramOptionsTestCMake(TestCase):
         parser._loginfo_print()
 
         return output
+
 
 
 # TEST_CMAKE_CACHE_PARAM_TEST_02

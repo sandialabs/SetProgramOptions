@@ -10,6 +10,3 @@ from .SetProgramOptionsCMake import SetProgramOptionsCMake
 
 # Helpers and Free Functions
 from .common import get_function_ref
-
-
-

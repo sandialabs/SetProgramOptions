@@ -50,12 +50,12 @@ Option entries are removed according to the rules:
 """
 
 # For type-hinting
-from typing import Dict,Iterable,List,Optional,Set,Tuple,Union
+from typing import Dict, Iterable, List, Optional, Set, Tuple, Union
 
-try:                                                                              # pragma: no cover
-    # @final decorator, requires Python 3.8.x
+try:                         # pragma: no cover
+                             # @final decorator, requires Python 3.8.x
     from typing import final
-except ImportError:                                                               # pragma: no cover
+except ImportError:          # pragma: no cover
     pass
 
 import copy
@@ -65,25 +65,23 @@ import dataclasses
 import re
 import sys
 
-MIN_PYTHON=(3,6)
-if sys.version_info < MIN_PYTHON:                                                 # pragma: no cover
-    sys.exit("Python %s.%s or later is required.\n"%(MIN_PYTHON))
+
+MIN_PYTHON = (3, 6)
+if sys.version_info < MIN_PYTHON: # pragma: no cover
+    sys.exit("Python %s.%s or later is required.\n" % (MIN_PYTHON))
 
 from configparserenhanced import *
 
-
 from .common import *
-
-
 
 # ==============================
 #  F R E E   F U N C T I O N S
 # ==============================
 
-
 # ===============================
 #   H E L P E R   C L A S S E S
 # ===============================
+
 
 
 class _VARTYPE_UNKNOWN(object):
@@ -92,6 +90,7 @@ class _VARTYPE_UNKNOWN(object):
     against unset variable types in ``ExpandVarsInText``.
     """
     pass
+
 
 
 class ExpandVarsInText(object):
@@ -110,57 +109,48 @@ class ExpandVarsInText(object):
 
     class VariableFieldData(object):
         varfield = typed_property('varfield', expected_type=str, req_assign_before_use=True)
-        varname  = typed_property('varname',  expected_type=str, req_assign_before_use=True)
-        vartype  = typed_property('vartype',  expected_type=str, req_assign_before_use=True)
-        start    = typed_property('start',    expected_type=int, req_assign_before_use=True)
-        end      = typed_property('end',      expected_type=int, req_assign_before_use=True)
+        varname = typed_property('varname', expected_type=str, req_assign_before_use=True)
+        vartype = typed_property('vartype', expected_type=str, req_assign_before_use=True)
+        start = typed_property('start', expected_type=int, req_assign_before_use=True)
+        end = typed_property('end', expected_type=int, req_assign_before_use=True)
 
-        def __init__(self, varfield: str, varname: str, vartype:str, start:int, end:int):
+        def __init__(self, varfield: str, varname: str, vartype: str, start: int, end: int):
             self.varfield = varfield
-            self.varname  = varname
-            self.vartype  = vartype
-            self.start    = start
-            self.end      = end
+            self.varname = varname
+            self.vartype = vartype
+            self.start = start
+            self.end = end
             return
 
-        def __str__(self):                               # pragma: no cover
+        def __str__(self):   # pragma: no cover
             return f"{self.varname}"
-
-
 
     # ---------------------
     #  P R O P E R T I E S
     # ---------------------
 
-
     # Default variable type. Default is _VARTYPE_UNKNOWN. If not overridden
     # or changed then a variable string like "${VARNAME}" that does not contain
     # a `|TYPE` component will cause a `ValueError` to be raised.
-    default_vartype = TypedProperty.typed_property("default_vartype",
-                                                   expected_type=str,
-                                                   default_factory=_VARTYPE_UNKNOWN,
-                                                   transform=str_toupper)
+    default_vartype = TypedProperty.typed_property(
+        "default_vartype", expected_type=str, default_factory=_VARTYPE_UNKNOWN, transform=str_toupper
+    )
 
     # Generator type. This is the _kind of output_ that we wish to generate.
-    generator = TypedProperty.typed_property("generator",
-                                             expected_type=str,
-                                             default="BASH",
-                                             transform=str_toupper)
+    generator = TypedProperty.typed_property(
+        "generator", expected_type=str, default="BASH", transform=str_toupper
+    )
 
     # Owner is a link back to the class that instantiated this object.
     # We use this to look back into the owning `SetProgramOptions` class
     # to check for cached information (if needed).
-    owner = TypedProperty.typed_property("owner",
-                                         expected_type=object,
-                                         default=None)
-
+    owner = TypedProperty.typed_property("owner", expected_type=object, default=None)
 
     # ---------------
     #  M E T H O D S
     # ---------------
 
-
-    def process(self, text:str) -> str:
+    def process(self, text: str) -> str:
         """
         Process a text string and expand any detected ``variables`` in them.
 
@@ -189,18 +179,16 @@ class ExpandVarsInText(object):
             field = tokenized_text[i]
             if isinstance(field, self.VariableFieldData):
                 conversion_method_name = "_fieldhandler_{}_{}".format(self.generator, field.vartype)
-                conversion_method_ref  = get_function_ref(self, conversion_method_name)
-                tokenized_text[i]      = conversion_method_ref(field)
+                conversion_method_ref = get_function_ref(self, conversion_method_name)
+                tokenized_text[i] = conversion_method_ref(field)
 
         output = "".join(tokenized_text)
 
         return output
 
-
     # ---------------------------------------
     #  C O N V E R S I O N   H A N D L E R S
     # ---------------------------------------
-
 
     def _fieldhandler_BASH_ENV(self, field) -> str:
         """
@@ -208,13 +196,11 @@ class ExpandVarsInText(object):
         """
         return "${" + field.varname + "}"
 
-
     # ---------------
     #  H E L P E R S
     # ---------------
 
-
-    def _tokenize_text_string(self, text:str):
+    def _tokenize_text_string(self, text: str):
         """
         Takes a text string and returns a list of text and VariableFieldData entries
 
@@ -228,16 +214,15 @@ class ExpandVarsInText(object):
 
         curidx = 0
         for varfield in varfield_list:
-            output.append( text[curidx:varfield.start] )
-            output.append( varfield )
+            output.append(text[curidx : varfield.start])
+            output.append(varfield)
             curidx = varfield.end
 
-        output.append( text[curidx:])
+        output.append(text[curidx :])
 
         return output
 
-
-    def _extract_fields_from_text(self, text:str, sep:str="|"):
+    def _extract_fields_from_text(self, text: str, sep: str = "|"):
         """Extracts the variablefields from a text string.
 
         Extracts fields from a text string that are formatted like:
@@ -258,17 +243,17 @@ class ExpandVarsInText(object):
         Called By:
             - ``_tokenize_text_string()``
         """
-        output  = []
+        output = []
         pattern = r"\$\{([a-zA-Z0-9_" + sep + r"\*\@\[\]]+)\}"
         matches = re.finditer(pattern, text)
 
         for m in matches:
             varfield = m.groups()[0]
 
-            vartype  = self.default_vartype
+            vartype = self.default_vartype
 
-            idxsep   = varfield.index(sep) if sep in varfield else None
-            varname  = varfield[:idxsep]
+            idxsep = varfield.index(sep) if sep in varfield else None
+            varname = varfield[: idxsep]
 
             if idxsep is not None:
                 vartype = varfield[idxsep + len(sep):]
@@ -276,10 +261,10 @@ class ExpandVarsInText(object):
 
             varfield = "${" + varfield + "}"
 
-            if isinstance( vartype, _VARTYPE_UNKNOWN ):
+            if isinstance(vartype, _VARTYPE_UNKNOWN):
                 raise ValueError("Variable missing TYPE field in expansion of `{}`".format(varfield))
 
-            output.append( self.VariableFieldData(varfield, varname, vartype, m.start(), m.end()))
+            output.append(self.VariableFieldData(varfield, varname, vartype, m.start(), m.end()))
 
         return output
 
@@ -288,6 +273,7 @@ class ExpandVarsInText(object):
 # ===============================
 #   M A I N   C L A S S
 # ===============================
+
 
 
 class SetProgramOptions(ConfigParserEnhanced):
@@ -300,20 +286,19 @@ class SetProgramOptions(ConfigParserEnhanced):
     .. docstrings style reference:
         https://www.sphinx-doc.org/en/master/usage/extensions/example_google.html
     """
+
     def __init__(self, filename=None):
         if filename is not None:
             self.inifilepath = filename
-
-
 
     # -----------------------
     #   P R O P E R T I E S
     # -----------------------
 
-
     _var_formatter_cache = typed_property("_varcache", expected_type=dict, default_factory=dict)
-    _var_formatter       = typed_property("_var_formatter", expected_type=ExpandVarsInText, default_factory=ExpandVarsInText)
-
+    _var_formatter = typed_property(
+        "_var_formatter", expected_type=ExpandVarsInText, default_factory=ExpandVarsInText
+    )
 
     @property
     def _data_shared_key(self) -> str:
@@ -341,7 +326,6 @@ class SetProgramOptions(ConfigParserEnhanced):
 
         """
         return self.__class__.__name__
-
 
     @property
     def options(self) -> dict:
@@ -382,19 +366,15 @@ class SetProgramOptions(ConfigParserEnhanced):
             self._property_options = {}
         return self._property_options
 
-
     @options.setter
     def options(self, value) -> dict:
         self._validate_parameter(value, (dict))
         self._property_options = value
         return self._property_options
 
-
-
     # -------------------------------
     #   P U B L I C   M E T H O D S
     # -------------------------------
-
 
     def gen_option_list(self, section, generator='bash') -> list:
         """Generate a list of options for a section.
@@ -473,14 +453,11 @@ class SetProgramOptions(ConfigParserEnhanced):
 
         return output
 
-
-
     # ---------------------------------------------------------------
     #   H A N D L E R S  -  P R O G R A M   O P T I O N S
     # ---------------------------------------------------------------
 
-
-    def _gen_option_entry(self, option_entry: dict, generator='bash') -> Union[str,None]:
+    def _gen_option_entry(self, option_entry: dict, generator='bash') -> Union[str, None]:
         """
         Takes an ``option_entry`` and looks for a specialized handler
         for that option **type**.
@@ -510,7 +487,7 @@ class SetProgramOptions(ConfigParserEnhanced):
         output = None
 
         method_name = None
-        method_ref  = None
+        method_ref = None
 
         method_name_list = []
 
@@ -532,7 +509,7 @@ class SetProgramOptions(ConfigParserEnhanced):
         # Found a match.
         if method_ref is not None:
             params = copy.deepcopy(option_entry['params'])
-            value  = copy.deepcopy(option_entry['value'])
+            value = copy.deepcopy(option_entry['value'])
 
             if value is not None:
                 if " " in value:
@@ -541,15 +518,14 @@ class SetProgramOptions(ConfigParserEnhanced):
                 # format the value
                 formatter = self._var_formatter
                 formatter.generator = generator
-                formatter.owner     = self
+                formatter.owner = self
                 value = formatter.process(value)
 
             output = method_ref(params, value)
 
         return output
 
-
-    def _generic_program_option_handler_bash(self, params:list, value:str) -> str:
+    def _generic_program_option_handler_bash(self, params: list, value: str) -> str:
         """Generic processer for generic bash options.
 
         This is the simplest kind of option handler for bash-like commands
@@ -581,8 +557,7 @@ class SetProgramOptions(ConfigParserEnhanced):
             output += "=" + value
         return output
 
-
-    def _program_option_handler_opt_set_bash(self, params:list, value:str) -> str:
+    def _program_option_handler_opt_set_bash(self, params: list, value: str) -> str:
         """Bash generator for ``opt-set`` operations.
 
         This method handles the generation of an entry for an
@@ -597,15 +572,12 @@ class SetProgramOptions(ConfigParserEnhanced):
         """
         return self._generic_program_option_handler_bash(params, value)
 
-
-
     # ---------------------------------------------------------------
     #   H A N D L E R S  -  C O N F I G P A R S E R E N H A N C E D
     # ---------------------------------------------------------------
 
-
     @ConfigParserEnhanced.operation_handler
-    def handler_initialize(self, section_name:str, handler_parameters) -> int:
+    def handler_initialize(self, section_name: str, handler_parameters) -> int:
         """Initialize a recursive parse search.
 
         Args:
@@ -623,9 +595,8 @@ class SetProgramOptions(ConfigParserEnhanced):
         self._initialize_handler_parameters(section_name, handler_parameters)
         return 0
 
-
     @ConfigParserEnhanced.operation_handler
-    def handler_finalize(self, section_name:str, handler_parameters) -> int:
+    def handler_finalize(self, section_name: str, handler_parameters) -> int:
         """Finalize a recursive parse search.
 
         Returns:
@@ -639,9 +610,8 @@ class SetProgramOptions(ConfigParserEnhanced):
         self.options[section_name] = handler_parameters.data_shared[self._data_shared_key]
         return 0
 
-
     @ConfigParserEnhanced.operation_handler
-    def _handler_opt_set(self, section_name:str, handler_parameters) -> int:
+    def _handler_opt_set(self, section_name: str, handler_parameters) -> int:
         """Handler for ``opt-set`` operations
 
         This handler is used for options whose ``key:value`` pair does not
@@ -666,9 +636,8 @@ class SetProgramOptions(ConfigParserEnhanced):
         """
         return self._option_handler_helper_add(section_name, handler_parameters)
 
-
     @ConfigParserEnhanced.operation_handler
-    def _handler_opt_remove(self, section_name:str, handler_parameters) -> int:
+    def _handler_opt_remove(self, section_name: str, handler_parameters) -> int:
         """Handler for ``opt-remove`` operations.
 
         Note:
@@ -688,12 +657,9 @@ class SetProgramOptions(ConfigParserEnhanced):
         """
         return self._option_handler_helper_remove(section_name, handler_parameters)
 
-
-
     # ---------------------------------
     #   H A N D L E R   H E L P E R S
     # ---------------------------------
-
 
     def _option_handler_helper_remove(self, section_name: str, handler_parameters) -> int:
         """Removes option(s) from the shared data options list.
@@ -742,17 +708,20 @@ class SetProgramOptions(ConfigParserEnhanced):
             self.debug_message(2, " -> Remove all options containing:`{}`".format(removal_key))
             data_shared_ref = list(filter(lambda x: removal_key not in x['params'], data_shared_ref))
 
-        if len(params) >= 2 and params[1]=="SUBSTR":
+        if len(params) >= 2 and params[1] == "SUBSTR":
             self.debug_message(2, " -> Remove all options containing SUBSTRING:`{}`".format(removal_key))
-            data_shared_ref = list(filter(lambda entry, rkey=removal_key:
-                                          all(rkey not in item for item in entry['params']),
-                                          data_shared_ref))
+            data_shared_ref = list(
+                filter(
+                    lambda entry,
+                    rkey=removal_key: all(rkey not in item for item in entry['params']),
+                    data_shared_ref
+                )
+            )
 
         handler_parameters.data_shared[self._data_shared_key] = data_shared_ref
         return 0
 
-
-    def _option_handler_helper_add(self, section_name:str, handler_parameters) -> int:
+    def _option_handler_helper_add(self, section_name: str, handler_parameters) -> int:
         """Add an option to the shared data options list
 
         Inserts an option into the ``handler_parameters.data_shared["{_data_shared_key}"]``
@@ -797,24 +766,18 @@ class SetProgramOptions(ConfigParserEnhanced):
             * > 10  : An unknown failure occurred (CRITICAL)
         """
         data_shared_ref = handler_parameters.data_shared[self._data_shared_key]
-        op     = handler_parameters.op
-        value  = handler_parameters.value
+        op = handler_parameters.op
+        value = handler_parameters.value
         params = handler_parameters.params
 
-        entry = {'type'   : [op],
-                 'value'  : value,
-                 'params' : params
-                }
+        entry = {'type': [op], 'value': value, 'params': params}
 
         data_shared_ref.append(entry)
         return 0
 
-
-
     # -----------------------
     #   H E L P E R S
     # -----------------------
-
 
     def _initialize_handler_parameters(self, section_name, handler_parameters) -> int:
         """Initialize ``handler_parameters``
@@ -838,4 +801,3 @@ class SetProgramOptions(ConfigParserEnhanced):
             data_shared_ref[self._data_shared_key] = []
 
         return 0
-
