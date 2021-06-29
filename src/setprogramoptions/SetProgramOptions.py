@@ -71,6 +71,7 @@ if sys.version_info < MIN_PYTHON:                                               
 
 from configparserenhanced import *
 
+
 from .common import *
 
 
@@ -107,22 +108,24 @@ class ExpandVarsInText(object):
     they're declaring.  These are a variables declared in a *pseudo-language* not bash.
     """
 
-    @dataclasses.dataclass(frozen=True)
-    class VariableFieldData:
-        """Dataclass that caches detected variable fields within a string"""
-        varfield: str = dataclasses.field(repr=False)
-        varname : str = dataclasses.field(repr=True)
-        vartype : str = dataclasses.field(repr=True)
-        start   : int = dataclasses.field(repr=False)
-        end     : int = dataclasses.field(repr=False)
+    class VariableFieldData(object):
+        varfield = typed_property('varfield', expected_type=str, req_assign_before_use=True)
+        varname  = typed_property('varname',  expected_type=str, req_assign_before_use=True)
+        vartype  = typed_property('vartype',  expected_type=str, req_assign_before_use=True)
+        start    = typed_property('start',    expected_type=int, req_assign_before_use=True)
+        end      = typed_property('end',      expected_type=int, req_assign_before_use=True)
 
-        def __str__(self):                                                                          # pragma: no cover
-            """
-            Useful for debugging if you ``print(VariableFieldDataObject)`` but
-            does not get used in normal execution.
-            """
-            output = "{}".format(self.varname)
-            return output
+        def __init__(self, varfield: str, varname: str, vartype:str, start:int, end:int):
+            self.varfield = varfield
+            self.varname  = varname
+            self.vartype  = vartype
+            self.start    = start
+            self.end      = end
+            return
+
+        def __str__(self):                               # pragma: no cover
+            return f"{self.varname}"
+
 
 
     # ---------------------
