@@ -5,19 +5,19 @@ Helper functions for testing
 """
 import os
 
-
-
 #===============================================================================
 #
 # Mock Helpers
 #
 #===============================================================================
 
+
+
 def mock_function_noreturn(*args, **kwargs):
     """
     Mock a function that does not return a value (i.e., returns NoneType)
     """
-    print("\nmock> f({}) ==> NoneType".format(args))                                                # pragma: no cover
+    print("\nmock> f({}) ==> NoneType".format(args)) # pragma: no cover
 
 
 
@@ -25,8 +25,8 @@ def mock_function_pass(*args, **kwargs):
     """
     Mock a function that 'passes', i.e., returns a 0.
     """
-    print("\nmock> f({}) ==> 0".format(args))                                                       # pragma: no cover
-    return 0                                                                                        # pragma: no cover
+    print("\nmock> f({}) ==> 0".format(args)) # pragma: no cover
+    return 0                                  # pragma: no cover
 
 
 
@@ -34,8 +34,8 @@ def mock_function_fail(*args, **kwargs):
     """
     Mock a function that 'fails', i.e., returns a 1.
     """
-    print("\nmock> f({}) ==> 1".format(args))                                                       # pragma: no cover
-    return 1                                                                                        # pragma: no cover
+    print("\nmock> f({}) ==> 1".format(args)) # pragma: no cover
+    return 1                                  # pragma: no cover
 
 
 
@@ -70,6 +70,7 @@ class mock_popen(object):
     """
     Abstract base class for popen mock
     """
+
     def __init__(self, cmd, stdout=None, stderr=None):
         print("mock_popen> {}".format(cmd))
         self.stdout = stdout
@@ -81,7 +82,7 @@ class mock_popen(object):
         stdout = b"os.environ['__foobar__'] ='baz'\ndel os.environ['__foobar__']"
         stderr = b"stderr=1"
         self.returncode = 0
-        return (stdout,stderr)
+        return (stdout, stderr)
 
 
 
@@ -89,8 +90,9 @@ class mock_popen_status_ok(mock_popen):
     """
     Specialization of popen mock that will return with success.
     """
+
     def __init__(self, cmd, stdout=None, stderr=None):
-        super(mock_popen_status_ok, self).__init__(cmd,stdout,stderr)
+        super(mock_popen_status_ok, self).__init__(cmd, stdout, stderr)
 
 
 
@@ -103,15 +105,16 @@ class mock_popen_status_error_rc0(mock_popen):
     to have a message like "ERROR: could not load module" in its stderr
     field but it will generally return an exit status of 0.
     """
+
     def __init__(self, cmd, stdout=None, stderr=None):
-        super(mock_popen_status_error_rc0, self).__init__(cmd,stdout,stderr)
+        super(mock_popen_status_error_rc0, self).__init__(cmd, stdout, stderr)
 
     def communicate(self):
         print("mock_popen> communicate()")
         stdout = b"_mlstatus = False\n"
         stderr = b"ERROR: Unable to locate a modulefile for 'gcc/1.2.3'\n"
         self.returncode = 0
-        return (stdout,stderr)
+        return (stdout, stderr)
 
 
 
@@ -122,20 +125,16 @@ class mock_popen_status_error_rc1(mock_popen):
     Test the condition where modulecmd returned a status of 1 and
     has `ERROR:` in its stderr field.
     """
+
     def __init__(self, cmd, stdout=None, stderr=None):
-        super(mock_popen_status_error_rc1, self).__init__(cmd,stdout,stderr)
+        super(mock_popen_status_error_rc1, self).__init__(cmd, stdout, stderr)
 
     def communicate(self):
         print("mock_popen> communicate()")
         stdout = b"_mlstatus = False\n"
         stderr = b"ERROR: Unable to locate a modulefile for 'gcc/1.2.3'\n"
         self.returncode = 1
-        return (stdout,stderr)
-
-
-
-
-
+        return (stdout, stderr)
 
 
 
@@ -145,7 +144,9 @@ class mock_popen_status_error_rc1(mock_popen):
 #
 #===============================================================================
 
-def find_config_ini(filename="config.ini", rootpath="." ):
+
+
+def find_config_ini(filename="config.ini", rootpath="."):
     """
     Recursively searches for a particular file among the subdirectory structure.
     If we find it, then we return the full relative path to `pwd` to that file.
@@ -162,11 +163,10 @@ def find_config_ini(filename="config.ini", rootpath="." ):
 
     """
     output = None
-    for dirpath,dirnames,filename_list in os.walk(rootpath):
+    for dirpath, dirnames, filename_list in os.walk(rootpath):
         if filename in filename_list:
             output = os.path.join(dirpath, filename)
             break
     if output is None:
-        raise FileNotFoundError("Unable to find {} in {}".format(filename, os.getcwd()))            # pragma: no cover
+        raise FileNotFoundError("Unable to find {} in {}".format(filename, os.getcwd())) # pragma: no cover
     return output
-

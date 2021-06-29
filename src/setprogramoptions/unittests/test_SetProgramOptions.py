@@ -4,9 +4,13 @@
 """
 from __future__ import print_function
 import sys
+
+
 sys.dont_write_bytecode = True
 
 import os
+
+
 sys.path.insert(1, os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
 
 from pprint import pprint
@@ -16,10 +20,10 @@ from unittest import TestCase
 
 # Coverage will always miss one of these depending on the system
 # and what is available.
-try:                                                                                                # pragma: no cover
-    import unittest.mock as mock                                                                    # pragma: no cover
-except:                                                                                             # pragma: no cover
-    import mock                                                                                     # pragma: no cover
+try:                             # pragma: no cover
+    import unittest.mock as mock # pragma: no cover
+except:                          # pragma: no cover
+    import mock                  # pragma: no cover
 
 from mock import Mock
 from mock import MagicMock
@@ -38,7 +42,6 @@ from setprogramoptions import *
 
 from .common import *
 
-
 # ===============================================================================
 #
 # General Utility Functions
@@ -47,13 +50,11 @@ from .common import *
 global_gen_new_ground_truth_files = False
 # global_gen_new_ground_truth_files = True     # comment this out for production.
 
-
 # ===============================================================================
 #
 # General Utility Functions
 #
 # ===============================================================================
-
 
 # ===============================================================================
 #
@@ -61,12 +62,12 @@ global_gen_new_ground_truth_files = False
 #
 # ===============================================================================
 
-
 # ===============================================================================
 #
 # Tests
 #
 # ===============================================================================
+
 
 
 class SetProgramOptionsTest(TestCase):
@@ -84,7 +85,6 @@ class SetProgramOptionsTest(TestCase):
         self.unit_test_file = os.path.basename(unit_test_path)
         self.unit_test_path = os.path.dirname(unit_test_path)
         return
-
 
     def test_SetProgramOptions_Template(self):
         """
@@ -138,7 +138,6 @@ class SetProgramOptionsTest(TestCase):
         print("OK")
         return 0
 
-
     def test_SetProgramOptions_property_inifilepath(self):
         """
         Runs a check that loads the filename using `inifilepath` property
@@ -165,7 +164,6 @@ class SetProgramOptionsTest(TestCase):
 
         print("OK")
         return 0
-
 
     def test_SetProgramOptions_property_options_setter(self):
         """
@@ -195,7 +193,6 @@ class SetProgramOptionsTest(TestCase):
         print("OK")
         return 0
 
-
     def test_SetProgramOptions_method_gen_options_list_01(self):
         """
         Test the ``gen_options_list`` method.
@@ -211,9 +208,9 @@ class SetProgramOptionsTest(TestCase):
         section = "TEST_OPTION_REMOVAL_VARIABLES"
         print("Section  : {}".format(section))
 
-        option_list_expect = ['-AParam1Param2Param3=VALUE_A',
-                              '-BParam4Param5Param6=VALUE_B',
-                              '-CArg1Arg2Arg3=VALUE_C']
+        option_list_expect = [
+            '-AParam1Param2Param3=VALUE_A', '-BParam4Param5Param6=VALUE_B', '-CArg1Arg2Arg3=VALUE_C'
+        ]
 
         # parse a section
         print("-" * 40)
@@ -253,7 +250,6 @@ class SetProgramOptionsTest(TestCase):
         print("OK")
         return 0
 
-
     def test_SetProgramOptions_method_gen_options_list_02(self):
         """
         Test the ``gen_options_list`` method.
@@ -279,7 +275,6 @@ class SetProgramOptionsTest(TestCase):
         print("OK")
         return 0
 
-
     def test_SetProgramOptions_handler_opt_remove_no_params(self):
         """
         Test the ``gen_options_list`` method.
@@ -302,7 +297,6 @@ class SetProgramOptionsTest(TestCase):
 
         print("OK")
         return 0
-
 
     def test_SetProgramOptions_initialize_handler_parameters_01(self):
         """
@@ -330,7 +324,6 @@ class SetProgramOptionsTest(TestCase):
 
         print("OK")
         return 0
-
 
     def test_SetProgramOptions_handler_opt_remove_01(self):
         """
@@ -388,7 +381,6 @@ class SetProgramOptionsTest(TestCase):
         print("OK")
         return 0
 
-
     def test_SetProgramOptions_handler_opt_remove_02(self):
         """
         Testing for opt_remove
@@ -445,7 +437,6 @@ class SetProgramOptionsTest(TestCase):
         print("OK")
         return 0
 
-
     def test_SetProgramOptions_method__gen_option_entry_method_not_found(self):
         """
         Test ``_gen_option_entry`` when the app can't locate a suitable
@@ -464,10 +455,7 @@ class SetProgramOptionsTest(TestCase):
         section = "TEST_OPTION_REMOVAL_VARIABLES"
         print("Section  : {}".format(section))
 
-        option_entry = {'type': ['nonexistent_command'],
-                        'value': None,
-                        'params': ['cmake']
-                        }
+        option_entry = {'type': ['nonexistent_command'], 'value': None, 'params': ['cmake']}
 
         output_expected = None
         output_actual = parser._gen_option_entry(option_entry, generator="bash")
@@ -477,7 +465,6 @@ class SetProgramOptionsTest(TestCase):
 
         print("OK")
         return 0
-
 
     def test_SetProgramOptions_method__gen_option_entry_generator_not_found(self):
         """
@@ -494,16 +481,15 @@ class SetProgramOptionsTest(TestCase):
         section = "TEST_OPTION_REMOVAL_VARIABLES"
         print("Section  : {}".format(section))
 
-        option_entry    = {'type': ['opt_set'], 'value': None, 'params': ['cmake']}
+        option_entry = {'type': ['opt_set'], 'value': None, 'params': ['cmake']}
         output_expected = None
-        output_actual   = parser._gen_option_entry(option_entry, generator="foobar")
+        output_actual = parser._gen_option_entry(option_entry, generator="foobar")
         self.assertEqual(output_expected, output_actual)
 
         print("-----[ TEST END ]------------------------------------------")
 
         print("OK")
         return 0
-
 
     def test_SetProgramOptions_test_spaces_in_value(self):
         """
@@ -538,7 +524,6 @@ class SetProgramOptionsTest(TestCase):
 
         print("OK")
         return 0
-
 
     def test_SetProgramOptions_test_var_exansion(self):
         """
@@ -577,7 +562,6 @@ class SetProgramOptionsTest(TestCase):
         print("OK")
         return 0
 
-
     def test_SetProgramOptions_test_var_exansion_no_type_given(self):
         """
         Test var expansion
@@ -603,7 +587,6 @@ class SetProgramOptionsTest(TestCase):
 
 
 
-
 class SetProgramOptionsTestCommon(TestCase):
     """
     Test free function(s) in the ``common.py`` file.
@@ -613,13 +596,14 @@ class SetProgramOptionsTestCommon(TestCase):
         """
         Test var expansion
         """
+
         class test_class(object):
+
             def testme(self):
                 # create a class member called 'foobar'
                 self.foobar = None
                 # This should raise an error because self.foobar is not callable.
                 get_function_ref(self, 'foobar')
-
 
         print("-----[ TEST BEGIN ]----------------------------------------")
         ccc = test_class()
@@ -630,5 +614,7 @@ class SetProgramOptionsTestCommon(TestCase):
 
         print("OK")
         return 0
+
+
 
 #

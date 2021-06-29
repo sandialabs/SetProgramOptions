@@ -1,17 +1,14 @@
 #!/usr/bin/env python3
 # -*- mode: python; py-indent-offset: 4; py-continuation-offset: 4 -*-
-"""
-Example app for SetProgramOptions
-"""
+
 import os
 from pprint import pprint
-
 
 import setprogramoptions
 
 
 
-def find_config_ini(filename="config.ini", rootpath="." ):
+def find_config_ini(filename="config.ini", rootpath="."):
     """
     Recursively searches for a particular file among the subdirectory structure.
     If we find it, then we return the full relative path to `pwd` to that file.
@@ -28,12 +25,12 @@ def find_config_ini(filename="config.ini", rootpath="." ):
 
     """
     output = None
-    for dirpath,dirnames,filename_list in os.walk(rootpath):
+    for dirpath, dirnames, filename_list in os.walk(rootpath):
         if filename in filename_list:
             output = os.path.join(dirpath, filename)
             break
     if output is None:
-        raise FileNotFoundError("Unable to find {} in {}".format(filename, os.getcwd()))  # pragma: no cover
+        raise FileNotFoundError("Unable to find {} in {}".format(filename, os.getcwd())) # pragma: no cover
     return output
 
 
@@ -60,7 +57,7 @@ def test_setprogramoptions(filename="config.ini"):
     print("Bash Output")
     print("-----------")
     option_list = parser.gen_option_list(section_name, generator="bash")
-    print( " \\\n    ".join(option_list) )
+    print(" \\\n    ".join(option_list))
 
     print("")
     print("CMake Fragment")
@@ -85,13 +82,15 @@ def parse_section(parser, section):
     pprint(data, width=120)
 
     # Print the loginfo from the last search (change if to True to enable)
-    if(False):
+    if (False):
         print("\nLogInfo")
         print("-------")
         #parser._loginfo_print(pretty=True)
 
         # Filter out just the entry and exits for handlers
-        handler_list = [ (d['type'], d['name']) for d in parser._loginfo if d['type'] in ['handler-entry','handler-exit']]
+        handler_list = [
+            (d['type'], d['name']) for d in parser._loginfo if d['type'] in ['handler-entry', 'handler-exit']
+        ]
         pprint(handler_list, width=120)
 
     return data
@@ -112,4 +111,3 @@ def main():
 if __name__ == "__main__":
     main()
     print("Done.")
-

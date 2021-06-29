@@ -10,7 +10,7 @@ def str_toupper(text):
 
 
 
-def get_function_ref(context, function_name:str) -> callable:
+def get_function_ref(context, function_name: str) -> callable:
     """Helper that locates a class method (if it exists)
 
     Args:
@@ -35,9 +35,3 @@ def get_function_ref(context, function_name:str) -> callable:
         raise TypeError("{}.{} is not callable.".format(context, function_name))
 
     return function_ref
-
-
-
-
-
-

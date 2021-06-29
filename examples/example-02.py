@@ -1,13 +1,13 @@
 #!/usr/bin/env python3
-import os
-import sys
+# -*- mode: python; py-indent-offset: 4; py-continuation-offset: 4 -*-
 
 import setprogramoptions
+
 
 filename = "example-02.ini"
 popts = setprogramoptions.SetProgramOptionsCMake(filename)
 
-section  = "MYPROJ_CONFIGURATION_NINJA"
+section = "MYPROJ_CONFIGURATION_NINJA"
 popts.parse_section(section)
 
 # Generate BASH output
@@ -25,4 +25,3 @@ cmake_options = popts.gen_option_list(section, generator="cmake_fragment")
 print("\n".join(cmake_options))
 
 print("\nDone")
-
