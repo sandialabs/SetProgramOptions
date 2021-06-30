@@ -59,7 +59,6 @@ except ImportError:          # pragma: no cover
     pass
 
 import copy
-import dataclasses
 #from pathlib import Path
 #from pprint import pprint
 import re
