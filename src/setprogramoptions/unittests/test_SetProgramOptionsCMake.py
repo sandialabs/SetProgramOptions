@@ -237,8 +237,12 @@ class SetProgramOptionsTestCMake(TestCase):
         # parse a section
         self._execute_parser(parser, section)
 
-        with self.assertRaises(ValueError):
-            parser.gen_option_list(section, generator="bash")
+        option_list_actual = parser.gen_option_list(section, generator="bash")
+        option_list_expect = [
+            'cmake',
+            '-DCMAKE_CXX_FLAGS:STRING="${LDFLAGS} -foo"',
+            '-DCMAKE_CXX_FLAGS:STRING="${LDFLAGS} -foo -bar"', '-DCMAKE_F90_FLAGS:STRING=" -baz"'
+        ]
 
         print("-----[ TEST END ]------------------------------------------")
 
