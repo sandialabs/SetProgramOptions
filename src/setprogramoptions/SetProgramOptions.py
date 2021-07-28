@@ -553,7 +553,7 @@ class SetProgramOptions(ConfigParserEnhanced):
         """
         output = "".join(params)
         if value is not None:
-            output += "=" + value
+            output += "=" + (value if "STRING" not in output else f'"{value}"')
         return output
 
     def _program_option_handler_opt_set_bash(self, params: list, value: str) -> str:
