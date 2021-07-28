@@ -394,6 +394,40 @@ class SetProgramOptionsTestCMake(TestCase):
         print("OK")
         return
 
+    def test_SetProgramOptionsCMake_test_STRING_value_surrounded_by_double_quotes(self):
+        """
+        Test STRING values are surrounded by double quotes.
+        """
+        print("\n")
+        print("Load file: {}".format(self._filename))
+        parser = self._create_standard_parser()
+
+        print("-----[ TEST BEGIN ]----------------------------------------")
+        section = "TEST_STRING_DOUBLE_QUOTES"
+        print("Section  : {}".format(section))
+
+        option_list_expect = [
+            '-DPanzer_FADTYPE:STRING="Sacado::Fad::DFad<RealType>"',
+            '-DDART_TESTING_TIMEOUT:STRING="600"',
+        ]
+        option_list_actual = parser.gen_option_list(section, generator="bash")
+
+        print("-" * 40)
+        print("Options List Expect")
+        print("-" * 40)
+        pprint(option_list_expect, width=120)
+        print("")
+        print("Options List Actual")
+        print("-" * 40)
+        pprint(option_list_actual, width=120)
+
+        self.assertEqual(option_list_expect, option_list_actual)
+
+        print("-----[ TEST END ]------------------------------------------")
+
+        print("OK")
+        return 0
+
     def _create_standard_parser(
         self, filename=DEFAULT_VALUE(), debug_level=5, ece_level=4, ece_compact=False
     ):
