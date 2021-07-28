@@ -77,11 +77,7 @@ class ExpandVarsInTextCMake(ExpandVarsInText):
         if field.varname in self.owner._var_formatter_cache.keys():
             output = self.owner._var_formatter_cache[field.varname].strip('"')
         else:
-            # A CMake var in a BASH command is bad.
-            msg = "Unhandled variable expansion for `{}`.".format(field.varname)
-            msg += " CMake variables are only valid in a CMake Fragment file."
-            raise ValueError(msg)
-
+            output = ""
         return output
 
     def _fieldhandler_CMAKE_FRAGMENT_ENV(self, field):
