@@ -182,6 +182,13 @@ class SetProgramOptionsCMake(SetProgramOptions):
             params.append(":" + param_opts['TYPE'])
 
         # Cache 'known' CMake vars here.
+        try:
+            if self._var_formatter_cache[varname] is not None and not param_opts['FORCE']:
+                # Do not add this to the output unless it's a forceful set
+                return None
+        except:
+            pass
+
         self._var_formatter_cache[varname] = value
 
         return self._generic_program_option_handler_bash(params, value)
