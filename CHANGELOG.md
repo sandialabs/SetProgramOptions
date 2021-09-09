@@ -23,6 +23,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 #### Deprecated
 #### Removed
 #### Fixed
+- Bash generation handling of the FORCE flag. See TRILFRAME-120 for details.
 #### Security
 #### Internal
 - Changed `VariableFieldData` so that it won't use `dataclasses` to keep our
@@ -68,5 +69,3 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 #### Added
 - Initial version release. From now on changes should be noted in the
   CHANGELOG.
-
-
