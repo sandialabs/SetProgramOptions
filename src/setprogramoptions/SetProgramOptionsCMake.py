@@ -20,8 +20,8 @@ This command can result in a generated **bash** output that might look like:
 ``-DVAR_NAME:BOOL=ON`` using the ``SetProgramOptions`` method ``gen_option_list``
 with the ``bash`` generator.
 
-In the case of bash command entries the ``FORCE`` and ``PARENT_SCOPE`` optional
-parameters are ignored.
+In the case of bash command entries the ``PARENT_SCOPE`` optional parameter is
+ignored.
 
 See CMake documentation on the `set() <https://cmake.org/cmake/help/latest/command/set.html>`_
 command for more information on how fragment file entries are generated.
