@@ -52,9 +52,9 @@ from pprint import pprint
 import shlex
 
 from configparserenhanced import *
+
 from .SetProgramOptions import SetProgramOptions
 from .SetProgramOptions import ExpandVarsInText
-
 
 # ==============================
 #  F R E E   F U N C T I O N S
@@ -71,12 +71,36 @@ class ExpandVarsInTextCMake(ExpandVarsInText):
     Extends ``ExpandVarsInText`` class to add in support for a ``CMAKE`` generator.
     """
 
+    def __init__(self):
+        self.exception_control_level = 3
+        self.exception_control_compact_warnings = True
+
     def _fieldhandler_BASH_CMAKE(self, field):
-        """Format CMAKE fields for the BASH generator."""
+        """
+        Format CMAKE fields for the BASH generator.
+
+        Args:
+            field (setprogramoptions.VariableFieldData): Stores the action entry's
+                parameters and field information.
+
+        Raises:
+            ValueError: A ``ValueError`` can be raised if we have an unresolved
+                CMake variable in the ``.ini`` file (i.e., ``${FIELDNAME|CMAKE}``).
+                By "unresolved" we mean that the CMake does not have some entry in
+                the cache that resolves it down to either text or a BASH environment
+                variable.
+                This exception is skipped if ``self.exception_control_level`` is set
+                to 3 or lower. If it is 4 or higher then the exception is raised.
+        """
         output = field.varfield
         if field.varname in self.owner._var_formatter_cache.keys():
             output = self.owner._var_formatter_cache[field.varname].strip('"')
         else:
+            # If self.exception_control_level is >= 4 then we'll raise the error
+            # instead of sending a warning.
+            msg = f"Unhandled variable expansion for `{field.varname}` in a BASH file."
+            msg += " CMake variables are only valid in a CMake fragment file."
+            self.exception_control_event("MINOR", ValueError, msg)
             output = ""
         return output
 

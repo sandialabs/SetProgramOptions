@@ -20,6 +20,14 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 ## [0.3.1] <!-- YYYY-MM-DD --> [Unreleased]
 #### Added
 #### Changed
+- Revert(ish) the modifications from MR12 which removed the error when generating
+  BASH output if there is an unhandled CMake variable left hanging around.
+  Rather than make this an unavoidable error though, ExpandVarsInText now inherits
+  from `configparserenhanced.ExceptionControl` and will raise a "MINOR"
+  `exception_control_event` (i.e., throws if `exception_control_level` is 4 or greater).
+  We also tie this _ecl_ to the _ecl_ of the `SetProgramOptions` class so changing this
+  will affect whether or not the exception is raised or if the output returned is an
+  empty string.
 #### Deprecated
 #### Removed
 #### Fixed
