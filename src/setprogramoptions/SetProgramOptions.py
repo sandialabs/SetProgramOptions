@@ -70,6 +70,7 @@ if sys.version_info < MIN_PYTHON: # pragma: no cover
     sys.exit("Python %s.%s or later is required.\n" % (MIN_PYTHON))
 
 from configparserenhanced import *
+import configparserenhanced.ExceptionControl
 
 from .common import *
 
@@ -92,7 +93,7 @@ class _VARTYPE_UNKNOWN(object):
 
 
 
-class ExpandVarsInText(object):
+class ExpandVarsInText(ExceptionControl):
     """
     Utility to identify and format variables that are found in a text string.
 
@@ -106,7 +107,16 @@ class ExpandVarsInText(object):
     they're declaring.  These are a variables declared in a *pseudo-language* not bash.
     """
 
+    def __init__(self):
+        self.exception_control_level = 4
+        self.exception_control_compact_warnings = True
+
     class VariableFieldData(object):
+        """
+        This is essentially a dataclass that is used to pass field data around within
+        the generators, etc. This captures the relevant fields from a given action
+        entry.
+        """
         varfield = typed_property('varfield', expected_type=str, req_assign_before_use=True)
         varname = typed_property('varname', expected_type=str, req_assign_before_use=True)
         vartype = typed_property('vartype', expected_type=str, req_assign_before_use=True)
@@ -513,6 +523,9 @@ class SetProgramOptions(ConfigParserEnhanced):
             if value is not None:
                 if " " in value:
                     value = '"' + value + '"'
+
+                # Update the var formatter's ECL to match the current value.
+                self._var_formatter.exception_control_level = self.exception_control_level
 
                 # format the value
                 formatter = self._var_formatter

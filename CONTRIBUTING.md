@@ -36,6 +36,9 @@ Merge Request Process
 4. Update unit tests to fully test your additions. We aim for 100% coverage on this project.
 5. Ensure unit tests and documentation build cleanly by running `exec-tests.sh`, `exec-makedoc.sh`
    and the _example_ applications in the repository.
+6. Run the `exec-reformat.py` script in the repository's root directory to update all formatting
+   using the **[YAPF][2]** tool. This is optional but STRONGLY encouraged, we reserve the right to
+   reject a merge request if this hasn't been run.
 
 Code of Conduct
 ===============

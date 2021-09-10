@@ -224,25 +224,60 @@ class SetProgramOptionsTestCMake(TestCase):
         print("OK")
         return 0
 
-    def test_SetProgramOptionsCMake_gen_option_list_bash_expandvars_with_unknown_cmake_var(self):
+    def test_SetProgramOptionsCMake_gen_option_list_bash_expandvars_with_unknown_cmake_var_ecl3(self):
         """
-        Test the ``gen_option_list`` method using the ``bash`` generator.
+        Test the ``gen_option_list`` method using the ``bash`` generator when the ECL for
+        ExpandVarsInTextCMake is set to 3 or lower. This should generate a WARNING.
         """
         parser = self._create_standard_parser()
+        parser.exception_control_level = 3
 
         print("-----[ TEST BEGIN ]----------------------------------------")
         section = "TEST_VAR_EXPANSION_UPDATE_02"
         print("Section  : {}".format(section))
 
-        # parse a section
+        # parse the section
         self._execute_parser(parser, section)
 
-        option_list_actual = parser.gen_option_list(section, generator="bash")
+        # Generate a BASH script representing the instructions in the section.
+
+        # what answer do we EXPECT:
         option_list_expect = [
             'cmake',
             '-DCMAKE_CXX_FLAGS:STRING="${LDFLAGS} -foo"',
-            '-DCMAKE_CXX_FLAGS:STRING="${LDFLAGS} -foo -bar"', '-DCMAKE_F90_FLAGS:STRING=" -baz"'
+            '-DCMAKE_CXX_FLAGS:STRING="${LDFLAGS} -foo -bar"',
+            '-DCMAKE_F90_FLAGS:STRING=" -baz"'
         ]
+
+        # Generate the BASH entries:
+        option_list_actual = parser.gen_option_list(section, generator="bash")
+
+        # Verify the results:
+        self.assertListEqual(option_list_actual, option_list_expect)
+
+        print("-----[ TEST END ]------------------------------------------")
+
+        print("OK")
+        return 0
+
+    def test_SetProgramOptionsCMake_gen_option_list_bash_expandvars_with_unknown_cmake_var_ecl4(self):
+        """
+        Test the ``gen_option_list`` method using the ``bash`` generator when the ECL
+        for ExpandVarsInTextCMake is set to 4 or higher. This should raise a ``ValueError``.
+        """
+        parser = self._create_standard_parser()
+        parser.exception_control_level = 5
+
+        print("-----[ TEST BEGIN ]----------------------------------------")
+        section = "TEST_VAR_EXPANSION_UPDATE_02"
+        print("Section  : {}".format(section))
+
+        # parse the section
+        self._execute_parser(parser, section)
+
+        # Generate a BASH script representing the instructions in the section.
+        with self.assertRaises(ValueError):
+            option_list_actual = parser.gen_option_list(section, generator="bash")
 
         print("-----[ TEST END ]------------------------------------------")
 
