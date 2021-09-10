@@ -1,5 +1,7 @@
 [run]
-omit = */unittests/*
+omit =
+    */unittests/*
+    */venv*
 branch = True
 dynamic_context = test_function
 
@@ -14,8 +16,6 @@ exclude_lines =
     pragma: no cover
     if 0:
     if False:
-omit =
-    venv*
 
 [html]
 directory = tests/htmlcov
