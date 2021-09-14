@@ -33,6 +33,8 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 #### Fixed
 #### Security
 #### Internal
+- Add test to verify that `opt-remove` also works to remove variables added
+  by `opt-set-cmake-var`.
 - Changed `VariableFieldData` so that it won't use `dataclasses` to keep our
   Python compatibilty to 3.6 (`dataclasses` requires 3.7 and higher).
 #### Todo (for Unreleased)

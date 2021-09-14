@@ -446,8 +446,8 @@ class SetProgramOptionsTestCMake(TestCase):
         print("Section  : {}".format(section))
 
         option_list_expect = [
-            '-DPanzer_FADTYPE:STRING="Sacado::Fad::DFad<RealType>"',
-            '-DDART_TESTING_TIMEOUT:STRING="600"',
+            '-DFOO:STRING="foo::bar::baz<Type>"',
+            '-DBAR:STRING="600"'
         ]
         option_list_actual = parser.gen_option_list(section, generator="bash")
 
@@ -462,6 +462,32 @@ class SetProgramOptionsTestCMake(TestCase):
 
         self.assertEqual(option_list_expect, option_list_actual)
 
+        print("-----[ TEST END ]------------------------------------------")
+
+        print("OK")
+        return 0
+
+    def test_SetProgramOptionsCMake_opt_remove(self):
+        """
+        This test validates that `opt-remove` will correctly remove a CMake var
+        that was created using `opt-set-cmake-var`
+        """
+        parser = self._create_standard_parser()
+
+        print("-----[ TEST BEGIN ]----------------------------------------")
+        section = "TEST_CMAKE_VAR_REMOVE"
+        print("Section  : {}".format(section))
+        option_list_bash_actual = parser.gen_option_list('TEST_CMAKE_VAR_REMOVE', 'bash')
+        option_list_bash_expect = [ '-DBAR_TEST=BAR', '-DFOO=BAZ' ]
+        self.assertListEqual(option_list_bash_expect, option_list_bash_actual)
+        print("-----[ TEST END ]------------------------------------------")
+
+        print("-----[ TEST BEGIN ]----------------------------------------")
+        section = "TEST_CMAKE_VAR_REMOVE"
+        print("Section  : {}".format(section))
+        option_list_cmake_fragment_actual = parser.gen_option_list('TEST_CMAKE_VAR_REMOVE', 'cmake_fragment')
+        option_list_cmake_fragment_expect = [ 'set(BAR_TEST BAR)', 'set(FOO BAZ)' ]
+        self.assertListEqual(option_list_cmake_fragment_expect, option_list_cmake_fragment_actual)
         print("-----[ TEST END ]------------------------------------------")
 
         print("OK")
