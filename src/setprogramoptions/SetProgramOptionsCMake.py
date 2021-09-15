@@ -202,7 +202,14 @@ class SetProgramOptionsCMake(SetProgramOptions):
         param_opts = self._helper_opt_set_cmake_var_parse_parameters(params)
 
         params = ["-D", varname]
-        if param_opts['TYPE'] is not None:
+
+        if param_opts['VARIANT'] == 1:
+            # if PARENT_SCOPE was given to something that is typed and forced us to
+            # be a type-1 variant, then we assign the list "<value>;CACHE;<type>;<docstring>"
+            if param_opts['TYPE'] != None:
+                value += f";CACHE;{param_opts['TYPE']};"
+
+        if param_opts['VARIANT'] == 2 and param_opts['TYPE'] is not None:
             params.append(":" + param_opts['TYPE'])
 
         # Cache 'known' CMake vars here.
@@ -314,7 +321,7 @@ class SetProgramOptionsCMake(SetProgramOptions):
         because the relevance of some options depends on the back-end
         generator. For example, ``PARENT_SCOPE`` is relevant to a ``cmake_fragment``
         generator but does not get used for a ``bash`` option that would be
-        provided to the ``camke`` application on the command line.
+        provided to the ``cmake`` application on the command line.
 
         Called By:
 
@@ -330,14 +337,62 @@ class SetProgramOptionsCMake(SetProgramOptions):
             omission of flags that are applicable to a CMake Cache
             variable operation.
         """
+        default_cache_var_type = "STRING"
+
         output = {'FORCE': False, 'PARENT_SCOPE': False, 'TYPE': None}
 
         for option in params[: 4]:
             if option == "FORCE":
                 output['FORCE'] = True
+                # If FORCE is found but we have no TYPE yet, set to the default.
+                if output['TYPE'] is None:
+                    output['TYPE'] = default_cache_var_type
             elif option == "PARENT_SCOPE":
                 output['PARENT_SCOPE'] = True
             elif option in ["BOOL", "FILEPATH", "PATH", "STRING", "INTERVAL"]:
                 output['TYPE'] = option
+
+        # Sanity Check(s)
+
+        # Case 1: PARENT_SCOPE and FORCE will cause a CMake Error
+        if output['FORCE'] and output['PARENT_SCOPE']:
+            msg = "ERROR: CMake does not allow `FORCE` and `PARENT_SCOPE` to both be used."
+            self.exception_control_event("CATASTROPHIC", ValueError, message=msg)
+        # Case 2: PARENT_SCOPE and CACHE will cause a CMake warning
+        #         and the value will include the cache entries as a list:
+        #             `set(FOO "VAL" CACHE STRING "docstring" PARENT_SCOPE)`
+        #         will result in `FOO` being set to "VAL;CACHE;STRING;docstring"
+        #         in the parent module's scope. This is probably not what someone
+        #         intended. Let this be a WARNING event though.
+        #         TBH: this should probably be a CATASTROPHIC but for now I'll
+        #              at least warn about it which is more than CMake does.
+        if output['PARENT_SCOPE'] and output["TYPE"] != None:
+            msg = "WARNING: Setting `PARENT_SCOPE` with `CACHE` parameters will result\n"
+            msg += "         in a non-CACHE variable being set containing a list of the\n"
+            msg += "         CACHE options. i.e., '<value>;CACHE;<type>;<docstring>'\n"
+            msg += "         which is probably not what is intended, but CMake will\n"
+            msg += "         not error or warn on this."
+            self.exception_control_event("WARNING", ValueError, message=msg)
+
+        # Determine the variant of the ``set`` operation.
+        # Type 1: ``set(<variable> <value>... [PARENT_SCOPE])``
+        # Type 2: ``set(<variable> <value>... CACHE <type> <docstring> [FORCE])``
+
+        # PARENT_SCOPE forces Type-1 (i.e., non-cache var)
+        # - This will override CACHE, at least as of CMake 3.21.x
+        if output['PARENT_SCOPE']:
+            output['VARIANT'] = 1
+
+        # FORCE implies CACHE. If type wasn't provided then it's a STRING
+        elif output['FORCE']:
+            output['VARIANT'] = 2
+
+        # If a TYPE is provided then it's a type-2 (CACHE) assignment.
+        elif output['TYPE'] is not None:
+            output['VARIANT'] = 2
+
+        # Otherwise, a simple set is a type-1
+        else:
+            output['VARIANT'] = 1
 
         return output
