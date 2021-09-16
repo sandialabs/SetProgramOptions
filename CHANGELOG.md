@@ -17,9 +17,10 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 #### Todo (for Unreleased)
 -->
 
-## [0.3.1] <!-- YYYY-MM-DD --> [Unreleased]
+## [0.4.0] <!-- YYYY-MM-DD --> [Unreleased]
 #### Added
 #### Changed
+- TODO: Add notes for !16/!17 // TRILFRAME-120 + TRILFRAME-136
 - Changes to `opt-set-cmake-var` behaviour:
   - Trigger a WARNING if `PARENT_SCOPE` and a _TYPE_ is provided since CMake
     requires TYPED vars to be CACHE vars and `PARENT_SCOPE` will force the

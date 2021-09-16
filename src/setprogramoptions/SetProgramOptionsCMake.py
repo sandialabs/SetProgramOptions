@@ -20,8 +20,19 @@ This command can result in a generated **bash** output that might look like:
 ``-DVAR_NAME:BOOL=ON`` using the ``SetProgramOptions`` method ``gen_option_list``
 with the ``bash`` generator.
 
-In the case of bash command entries the ``PARENT_SCOPE`` optional parameter is
-ignored.
+When using the BASH generator to generate command line arguments, CMake
+uses the syntax ``-D<VARNAME>[:<TYPE>]=<VALUE>``. The ``TYPE`` field is optional
+and if left out CMake will default to a ``STRING`` type. Further, all CMake
+varaibles set via the command line using ``-D`` will be CACHE variables and each
+``-D`` operation should be considered a FORCE operation too. For example,
+``-DFOO:STRING=BAR`` is roughly equivalent to the CMake command:
+``set(FOO CACHE STRING "docstring" FORCE)``.
+
+The ``PARENT_SCOPE`` option applies only to non-cache variables and its presence
+will instruct CMake to make that variable non-cache. Care should be taken when
+using ``PARENT_SCOPE`` as combining it with the usual CACHE operations results
+in CMake creating a non-cached variable whose contents are the list containing
+``<varname>;CACHE;<type>;doc string``.
 
 See CMake documentation on the `set() <https://cmake.org/cmake/help/latest/command/set.html>`_
 command for more information on how fragment file entries are generated.
@@ -73,7 +84,6 @@ class ExpandVarsInTextCMake(ExpandVarsInText):
 
     def __init__(self):
         self.exception_control_level = 3
-        self.exception_control_compact_warnings = True
 
     def _fieldhandler_BASH_CMAKE(self, field):
         """
@@ -183,7 +193,7 @@ class SetProgramOptionsCMake(SetProgramOptions):
         """
         return None
 
-    def _program_option_handler_opt_set_cmake_var_bash(self, params, value) -> str:
+    def _program_option_handler_opt_set_cmake_var_bash(self, params: list, value: str) -> str:
         """
         Line-item generator for ``opt-set-cmake-var`` entries when the *generator*
         is set to ``bash``.
@@ -196,30 +206,50 @@ class SetProgramOptionsCMake(SetProgramOptions):
             side-effects since :py:meth:`setprogramoptions.SetProgramOptions._gen_option_entry`
             performs a deep-copy of these parameters prior to calling this.
             Any changes we make are ephemeral.
+
+        Args:
+            params (list): The parameters of the operation.
+            value (str): The value of the option that is being assigned.
+
+        Raises:
+            ValueError: This can potentially raise a ``ValueError`` if
+                ``exception_control_level`` is set to 5 if there are
+                operations that are skipped in Bash generation. If ``ecl``
+                is less than 5 then warnings are generated to note the
+                exclusion.
         """
         varname = params[0]
         params = params[1 : 4]
         param_opts = self._helper_opt_set_cmake_var_parse_parameters(params)
 
+        # PARENT_SCOPE (i.e., type-1 non-cached operations) should not be
+        # written to the set of Bash parameters.
+        if param_opts['VARIANT'] == 1:
+            msg = f"bash generator - `{varname}={value}` skipped because"
+            msg += f" it is a non-cached (type-1) operation."
+            msg += f" To generate a bash arg for this consider adding FORCE or a TYPE."
+            self.exception_control_event("WARNING", ValueError, message=msg)
+            return None
+
+        # If varname has already been assigned and this assignment
+        # does not include FORCE then we should skip adding it to the
+        # set of command line options.
+        if varname in self._var_formatter_cache and not param_opts['FORCE']:
+            msg = f"bash generator - `{varname}={value}` skipped because"
+            msg += f" CACHE var `{varname}` is already set and CMake requires"
+            msg += f" FORCE to be set to change the value."
+            self.exception_control_event("WARNING", ValueError, message=msg)
+            return None
+
+        # Prepend `-D` to the parameters
         params = ["-D", varname]
 
-        if param_opts['VARIANT'] == 1:
-            # if PARENT_SCOPE was given to something that is typed and forced us to
-            # be a type-1 variant, then we assign the list "<value>;CACHE;<type>;<docstring>"
-            if param_opts['TYPE'] != None:
-                value += f";CACHE;{param_opts['TYPE']};"
+        # If the type is provided then include the `:<typename>` argument.
+        # Note: CMake defaults to STRING if not provided.
+        #if param_opts['VARIANT'] == 2 and param_opts['TYPE'] is not None:           # DEADCODE: this can't be false now
+        params.append(":" + param_opts['TYPE'])
 
-        if param_opts['VARIANT'] == 2 and param_opts['TYPE'] is not None:
-            params.append(":" + param_opts['TYPE'])
-
-        # Cache 'known' CMake vars here.
-        try:
-            if self._var_formatter_cache[varname] is not None and not param_opts['FORCE']:
-                # Do not add this to the output unless it's a forceful set
-                return None
-        except:
-            pass
-
+        # Save variable to the cache of 'known'/'set' cmake variables
         self._var_formatter_cache[varname] = value
 
         return self._generic_program_option_handler_bash(params, value)
