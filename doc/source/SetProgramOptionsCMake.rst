@@ -15,6 +15,37 @@ Supported .ini File Operations
     :header-rows: 1
     :widths: 20,30,80
 
+``opt-set-cmake-var``
++++++++++++++++++++++
+**Usage**: ``opt-set-cmake-var <varname> [TYPE] [PARENT_SCOPE] [FORCE] : <value>``
+
+A CMake variable set operation. This can be used to genrate bash command line options
+of the form ``-D<varname>[:<type>]=<value>`` or in a CMake fragment we may generate
+a ``set()`` command.
+
+For information related to CMake Fragment generation of ``set()`` commands, see
+the `CMake docs <https://cmake.org/cmake/help/latest/command/set.html#command:set>`_ .
+
+``PARENT_SCOPE`` and ``FORCE`` are mutually exclusive options and will result in an
+error being thrown.
+
+An additional thing to note is that ``PARENT_SCOPE`` should not be used with ``CACHE``
+variables (i.e., *typed* variables). CMake will happily process this but you will likely
+get a result that you do not want. In a CMake fragment file:
+
+.. code-block:: cmake
+  :linenos:
+
+  set(FOO FOO_VALUE CACHE STRING "my docstring" PARENT_SCOPE)
+
+Will result in the value of ``FOO`` being set to ``FOO_VALUE;CACHE;STRING;my docstring``
+which is unlikely to match expectations, but that is what CMake will do. In this case,
+``SetProgramOptionsCMake`` will raise a warning and will generate a string to match what
+CMake generates when sent to a bash options generator
+(i.e., ``-DFOO="FOO_VALUE;CACHE;STRING;my docstring"``).
+When sent through the *cmake fragment* generator the output will be the equivalent ``set()``
+call.
+
 
 Useful Links
 ------------

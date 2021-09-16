@@ -367,42 +367,26 @@ class SetProgramOptionsTestCMake(TestCase):
         self._execute_parser(parser, section)
 
         option_list_bash_expect = [
-            '-DCMAKE_VAR_A=ON',
+            '-DCMAKE_VAR_A:STRING="ON"',
             '-DCMAKE_VAR_B=ON',
             '-DCMAKE_VAR_C:BOOL=ON',
-            '-DCMAKE_VAR_D=ON',
-            '-DCMAKE_VAR_E=ON',
             '-DCMAKE_VAR_F:BOOL=ON',
             '-DCMAKE_VAR_G:BOOL=ON',
-            '-DCMAKE_VAR_H:BOOL=ON',
-            '-DCMAKE_VAR_I:BOOL=ON',
-            '-DCMAKE_VAR_J:BOOL=ON',
-            '-DCMAKE_VAR_K:BOOL=ON',
-            '-DCMAKE_VAR_L:BOOL=ON',
-            '-DCMAKE_VAR_M:BOOL=ON',
-            '-DCMAKE_VAR_N:BOOL=ON',
-            '-DCMAKE_VAR_O:BOOL=ON'
+            '-DCMAKE_VAR_H=ON;CACHE;BOOL;',
+            '-DCMAKE_VAR_I=ON;CACHE;BOOL;'
         ]
 
         option_list_bash_actual = parser.gen_option_list(section, generator="bash")
         self.assertListEqual(option_list_bash_expect, option_list_bash_actual)
 
         option_list_cmake_fragment_expect = [
-            'set(CMAKE_VAR_A ON FORCE)',
+            'set(CMAKE_VAR_A ON CACHE STRING "from .ini configuration" FORCE)',
             'set(CMAKE_VAR_B ON PARENT_SCOPE)',
             'set(CMAKE_VAR_C ON CACHE BOOL "from .ini configuration")',
-            'set(CMAKE_VAR_D ON PARENT_SCOPE FORCE)',
-            'set(CMAKE_VAR_E ON PARENT_SCOPE FORCE)',
             'set(CMAKE_VAR_F ON CACHE BOOL "from .ini configuration" FORCE)',
             'set(CMAKE_VAR_G ON CACHE BOOL "from .ini configuration" FORCE)',
             'set(CMAKE_VAR_H ON CACHE BOOL "from .ini configuration" PARENT_SCOPE)',
             'set(CMAKE_VAR_I ON CACHE BOOL "from .ini configuration" PARENT_SCOPE)',
-            'set(CMAKE_VAR_J ON CACHE BOOL "from .ini configuration" PARENT_SCOPE FORCE)',
-            'set(CMAKE_VAR_K ON CACHE BOOL "from .ini configuration" PARENT_SCOPE FORCE)',
-            'set(CMAKE_VAR_L ON CACHE BOOL "from .ini configuration" PARENT_SCOPE FORCE)',
-            'set(CMAKE_VAR_M ON CACHE BOOL "from .ini configuration" PARENT_SCOPE FORCE)',
-            'set(CMAKE_VAR_N ON CACHE BOOL "from .ini configuration" PARENT_SCOPE FORCE)',
-            'set(CMAKE_VAR_O ON CACHE BOOL "from .ini configuration" PARENT_SCOPE FORCE)'
         ]
 
         option_list_cmake_fragment_actual = parser.gen_option_list(section, generator="cmake_fragment")
@@ -414,6 +398,8 @@ class SetProgramOptionsTestCMake(TestCase):
 
     def test_SetProgramOptionsCMake_param_order_02(self):
         """
+        Tests that we correctly generate output if extra flags
+        are provided such as something to uniqueify a .ini option entry.
         """
         parser = self._create_standard_parser()
 
@@ -424,10 +410,38 @@ class SetProgramOptionsTestCMake(TestCase):
         # parse a section
         self._execute_parser(parser, section)
 
-        option_list_bash_expect = ['-DCMAKE_VAR_A=ON']
+        option_list_bash_expect = ['-DCMAKE_VAR_A:STRING="ON"']
 
         option_list_bash_actual = parser.gen_option_list(section, generator="bash")
         self.assertListEqual(option_list_bash_expect, option_list_bash_actual)
+        print("-----[ TEST END ]------------------------------------------")
+
+        print("OK")
+        return
+
+    def test_SetProgramOptionsCMake_fail_on_FORCE_and_PARENT_SCOPE(self):
+        """
+        Tests the case that both PARENT_SCOPE and FORCE are provided.
+        This will cause a CMake error beacuse the existence of PARENT_SCOPE
+        forces CMake to use a Type-1 set operation, i.e. a NON-CACHEd
+        variable. However ``FORCE`` is only valid for a CACHED variable (Type-2).
+        These two options are mutually exclusive and CMake will fail.
+
+        In this case SetProgramOptionsCMake should raise a CATASTROPHIC
+        error because the operation provided is invalid.
+        """
+        parser = self._create_standard_parser()
+
+        print("-----[ TEST BEGIN ]----------------------------------------")
+        section = "TEST_CMAKE_FAIL_ON_PARENT_SCOPE_AND_FORCE"
+        print("Section  : {}".format(section))
+
+        # parse a section
+        self._execute_parser(parser, section)
+
+        with self.assertRaises(ValueError):
+            parser.gen_option_list(section, generator="bash")
+
         print("-----[ TEST END ]------------------------------------------")
 
         print("OK")
@@ -445,10 +459,7 @@ class SetProgramOptionsTestCMake(TestCase):
         section = "TEST_STRING_DOUBLE_QUOTES"
         print("Section  : {}".format(section))
 
-        option_list_expect = [
-            '-DFOO:STRING="foo::bar::baz<Type>"',
-            '-DBAR:STRING="600"'
-        ]
+        option_list_expect = ['-DFOO:STRING="foo::bar::baz<Type>"', '-DBAR:STRING="600"']
         option_list_actual = parser.gen_option_list(section, generator="bash")
 
         print("-" * 40)
@@ -478,7 +489,7 @@ class SetProgramOptionsTestCMake(TestCase):
         section = "TEST_CMAKE_VAR_REMOVE"
         print("Section  : {}".format(section))
         option_list_bash_actual = parser.gen_option_list('TEST_CMAKE_VAR_REMOVE', 'bash')
-        option_list_bash_expect = [ '-DBAR_TEST=BAR', '-DFOO=BAZ' ]
+        option_list_bash_expect = ['-DBAR_TEST=BAR', '-DFOO=BAZ']
         self.assertListEqual(option_list_bash_expect, option_list_bash_actual)
         print("-----[ TEST END ]------------------------------------------")
 
@@ -486,7 +497,7 @@ class SetProgramOptionsTestCMake(TestCase):
         section = "TEST_CMAKE_VAR_REMOVE"
         print("Section  : {}".format(section))
         option_list_cmake_fragment_actual = parser.gen_option_list('TEST_CMAKE_VAR_REMOVE', 'cmake_fragment')
-        option_list_cmake_fragment_expect = [ 'set(BAR_TEST BAR)', 'set(FOO BAZ)' ]
+        option_list_cmake_fragment_expect = ['set(BAR_TEST BAR)', 'set(FOO BAZ)']
         self.assertListEqual(option_list_cmake_fragment_expect, option_list_cmake_fragment_actual)
         print("-----[ TEST END ]------------------------------------------")
 
