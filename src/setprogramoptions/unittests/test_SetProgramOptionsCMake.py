@@ -222,27 +222,6 @@ class SetProgramOptionsTestCMake(TestCase):
         self.assertListEqual(option_list_expect, option_list_actual)
         print("-----[ TEST END ]------------------------------------------")
         print("OK")
-
-        print("-----[ TEST BEGIN ]----------------------------------------")
-        section = "TEST_VAR_EXPANSION_UPDATE_04"
-        print("Section  : {}".format(section))
-
-        self._execute_parser(parser, section)
-
-        print("-" * 40)
-        print("Option List")
-        print("-" * 40)
-        option_list_expect = [
-            'cmake',
-            '-DCMAKE_CXX_FLAGS:STRING="${LDFLAGS} -foo"',
-        ]
-
-        option_list_actual = parser.gen_option_list(section, generator="bash")
-        pprint(option_list_actual, width=200)
-
-        self.assertListEqual(option_list_expect, option_list_actual)
-        print("-----[ TEST END ]------------------------------------------")
-        print("OK")
         return 0
 
     def test_SetProgramOptionsCMake_gen_option_list_bash_expandvars_with_unknown_cmake_var_ecl3(self):
@@ -359,7 +338,7 @@ class SetProgramOptionsTestCMake(TestCase):
 
         option_list_expect = [
             'set(CMAKE_CXX_FLAGS "$ENV{LDFLAGS} -foo" CACHE STRING "from .ini configuration")',
-            'set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -bar" CACHE STRING "from .ini configuration" FORCE)',
+            'set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -bar" CACHE STRING "from .ini configuration")',
             'set(CMAKE_F90_FLAGS "${CMAKE_F90_FLAGS} -baz" CACHE STRING "from .ini configuration")'
         ]
 
@@ -371,40 +350,8 @@ class SetProgramOptionsTestCMake(TestCase):
         self.assertListEqual(option_list_expect, option_list_actual)
 
         print("-----[ TEST END ]------------------------------------------")
+
         print("OK")
-
-        # The following TEST_VAR_EXPANSION_UPDATE_04 does not increase coverage
-        # but is here to illustrate the correctness issue reported in
-        # TRILFRAME-120. To compare the option_list_expect below to that
-        # of the option_list_expect for the bash generator, see the
-        # TEST_VAR_EXPANSION_UPDATE_04 test above in
-        # test_SetProgramOptionsCMake_gen_option_list_bash_expandvars.
-        print("-----[ TEST BEGIN ]----------------------------------------")
-        section = "TEST_VAR_EXPANSION_UPDATE_04"
-        print("Section  : {}".format(section))
-
-        # parse a section
-        self._execute_parser(parser, section)
-
-        parser.gen_option_list(section, generator="cmake_fragment")
-
-        option_list_expect = [
-            # Only the first set with "-foo" sticks in the cmake cache.
-            # If the second set with "-foobar" used FORCE, it would stick.
-            'set(CMAKE_CXX_FLAGS "$ENV{LDFLAGS} -foo" CACHE STRING "from .ini configuration")',
-            'set(CMAKE_CXX_FLAGS "$ENV{LDFLAGS} -foobar" CACHE STRING "from .ini configuration")',
-        ]
-
-        option_list_actual = parser.gen_option_list(section, generator="cmake_fragment")
-
-        print("Expected Output:\n{}\n".format("\n".join(option_list_expect)))
-        print("Actual Output:\n{}\n".format("\n".join(option_list_actual)))
-
-        self.assertListEqual(option_list_expect, option_list_actual)
-
-        print("-----[ TEST END ]------------------------------------------")
-        print("OK")
-
         return 0
 
     def test_SetProgramOptionsCMake_param_order_01(self):

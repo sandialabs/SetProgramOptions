@@ -44,7 +44,6 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 #### Deprecated
 #### Removed
 #### Fixed
-- Bash generation handling of the FORCE flag. See TRILFRAME-120 for details.
 #### Security
 #### Internal
 - Add test to verify that `opt-remove` also works to remove variables added
@@ -92,3 +91,5 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 #### Added
 - Initial version release. From now on changes should be noted in the
   CHANGELOG.
+
+
