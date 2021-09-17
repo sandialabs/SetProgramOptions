@@ -222,12 +222,13 @@ class SetProgramOptionsCMake(SetProgramOptions):
         params = params[1 : 4]
         param_opts = self._helper_opt_set_cmake_var_parse_parameters(params)
 
-        # PARENT_SCOPE (i.e., type-1 non-cached operations) should not be
+        # Type-1 (non-cached / PARENT_SCOPE / non-typed) entries should not be
         # written to the set of Bash parameters.
         if param_opts['VARIANT'] == 1:
             msg = f"bash generator - `{varname}={value}` skipped because"
             msg += f" it is a non-cached (type-1) operation."
-            msg += f" To generate a bash arg for this consider adding FORCE or a TYPE."
+            msg += f" To generate a bash arg for this consider adding FORCE or a TYPE"
+            msg += f" and remove PARENT_SCOPE if it exists."
             self.exception_control_event("WARNING", ValueError, message=msg)
             return None
 
@@ -246,7 +247,6 @@ class SetProgramOptionsCMake(SetProgramOptions):
 
         # If the type is provided then include the `:<typename>` argument.
         # Note: CMake defaults to STRING if not provided.
-        #if param_opts['VARIANT'] == 2 and param_opts['TYPE'] is not None:           # DEADCODE: this can't be false now
         params.append(":" + param_opts['TYPE'])
 
         # Save variable to the cache of 'known'/'set' cmake variables
@@ -376,12 +376,15 @@ class SetProgramOptionsCMake(SetProgramOptions):
         """
         default_cache_var_type = "STRING"
 
-        output = {'FORCE': False, 'PARENT_SCOPE': False, 'TYPE': None}
+        output = {'FORCE': False, 'PARENT_SCOPE': False, 'TYPE': None, 'VARIANT': None}
 
         for option in params[: 4]:
             if option == "FORCE":
                 output['FORCE'] = True
                 # If FORCE is found but we have no TYPE yet, set to the default.
+                # TODO: Should we be setting the default to STRING here when FORCE
+                #       is provided with no explicit type? Future CMake versions might
+                #       someday change the default which would possibly break this?
                 if output['TYPE'] is None:
                     output['TYPE'] = default_cache_var_type
             elif option == "PARENT_SCOPE":
@@ -395,6 +398,7 @@ class SetProgramOptionsCMake(SetProgramOptions):
         if output['FORCE'] and output['PARENT_SCOPE']:
             msg = "ERROR: CMake does not allow `FORCE` and `PARENT_SCOPE` to both be used."
             self.exception_control_event("CATASTROPHIC", ValueError, message=msg)
+
         # Case 2: PARENT_SCOPE and CACHE will cause a CMake warning
         #         and the value will include the cache entries as a list:
         #             `set(FOO "VAL" CACHE STRING "docstring" PARENT_SCOPE)`

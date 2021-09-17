@@ -426,11 +426,10 @@ class SetProgramOptionsTestCMake(TestCase):
 
         print("-----[ TEST BEGIN ]----------------------------------------")
         option_list_bash_expect = [
-            '-DCMAKE_VAR_A:STRING="ON"', #'-DCMAKE_VAR_B=ON',
+            '-DCMAKE_VAR_A:STRING="ON"',
             '-DCMAKE_VAR_C:BOOL=ON',
             '-DCMAKE_VAR_D:BOOL=ON',
-            '-DCMAKE_VAR_E:BOOL=ON',     #'-DCMAKE_VAR_F=ON;CACHE;BOOL;',
-                                         #'-DCMAKE_VAR_G=ON;CACHE;BOOL;'
+            '-DCMAKE_VAR_E:BOOL=ON',
         ]
 
         option_list_bash_actual = parser.gen_option_list(section, generator="bash")
@@ -474,7 +473,36 @@ class SetProgramOptionsTestCMake(TestCase):
         print("-----[ TEST END ]------------------------------------------")
 
         print("OK")
-        return
+        return 0
+
+    def test_SetProgramOptionsCMake_bash_generator_ignores_PARENT_SCOPE(self):
+        """
+        Verify that the bash generator will not add a ``-D`` entry for a
+        ``opt-set-cmake-var`` that has the ``PARENT_SCOPE`` flag since that
+        will always force CMake to create a type-1 (non-cache) var assignment.
+        """
+        parser = self._create_standard_parser()
+
+        section = "TEST_CMAKE_PARENT_SCOPE_NOT_BASH"
+        print("Section  : {}".format(section))
+
+        print("-----[ TEST BEGIN ]----------------------------------------")
+        option_list_bash_expect = []
+        option_list_bash_actual = parser.gen_option_list(section, generator="bash")
+        self.assertListEqual(option_list_bash_expect, option_list_bash_actual)
+        print("-----[ TEST END ]------------------------------------------")
+
+        print("-----[ TEST BEGIN ]----------------------------------------")
+        option_list_cmake_fragment_expect = [
+            'set(FOO_VAR_A "FOO_VAL A" PARENT_SCOPE)',
+            'set(FOO_VAR_B "FOO_VAL B" CACHE STRING "from .ini configuration" PARENT_SCOPE)'
+        ]
+        option_list_cmake_fragment_actual = parser.gen_option_list(section, generator="cmake_fragment")
+        self.assertListEqual(option_list_cmake_fragment_expect, option_list_cmake_fragment_actual)
+        print("-----[ TEST END ]------------------------------------------")
+
+        print("OK")
+        return 0
 
     def test_SetProgramOptionsCMake_fail_on_FORCE_and_PARENT_SCOPE(self):
         """
@@ -646,4 +674,3 @@ class SetProgramOptionsTestCMake(TestCase):
 
 
 
-# TEST_CMAKE_CACHE_PARAM_TEST_02
