@@ -23,7 +23,7 @@ with the ``bash`` generator.
 When using the BASH generator to generate command line arguments, CMake
 uses the syntax ``-D<VARNAME>[:<TYPE>]=<VALUE>``. The ``TYPE`` field is optional
 and if left out CMake will default to a ``STRING`` type. Further, all CMake
-varaibles set via the command line using ``-D`` will be CACHE variables and each
+variables set via the command line using ``-D`` will be CACHE variables and each
 ``-D`` operation should be considered a FORCE operation too. For example,
 ``-DFOO:STRING=BAR`` is roughly equivalent to the CMake command:
 ``set(FOO CACHE STRING "docstring" FORCE)``.
@@ -32,7 +32,11 @@ The ``PARENT_SCOPE`` option applies only to non-cache variables and its presence
 will instruct CMake to make that variable non-cache. Care should be taken when
 using ``PARENT_SCOPE`` as combining it with the usual CACHE operations results
 in CMake creating a non-cached variable whose contents are the list containing
-``<varname>;CACHE;<type>;doc string``.
+``<varname>;CACHE;<type>;doc string``. As a result, the BASH generator issues
+warnings with no generated command line arguments when either:
+ 1. ``PARENT_SCOPE`` or;
+ 2. solely a variable name AND variable value.
+are passed in to `opt-set-cmake-var`.
 
 See CMake documentation on the `set() <https://cmake.org/cmake/help/latest/command/set.html>`_
 command for more information on how fragment file entries are generated.
@@ -42,8 +46,10 @@ We do not support the *environment variable* variation of ``set()`` at this time
 
 :Authors:
     - William C. McLendon III <wcmclen@sandia.gov>
+    - Evan Harvey <eharvey@sandia.gov>
 """
 from __future__ import print_function
+from enum import Enum
 
 #import inspect
 #from pathlib import Path
@@ -130,7 +136,10 @@ class ExpandVarsInTextCMake(ExpandVarsInText):
 #   M A I N   C L A S S
 # ===============================
 
-
+class VarType(Enum):
+    """Enumeration used to check for CMake variable types in SPOC."""
+    CACHE = 1
+    NON_CACHE = 2
 
 class SetProgramOptionsCMake(SetProgramOptions):
     """Extends SetProgramOptions to add in CMake option support.
@@ -224,7 +233,7 @@ class SetProgramOptionsCMake(SetProgramOptions):
 
         # Type-1 (non-cached / PARENT_SCOPE / non-typed) entries should not be
         # written to the set of Bash parameters.
-        if param_opts['VARIANT'] == 1:
+        if param_opts['VARIANT'] == VarType.NON_CACHE:
             msg = f"bash generator - `{varname}={value}` skipped because"
             msg += f" it is a non-cached (type-1) operation."
             msg += f" To generate a bash arg for this consider adding FORCE or a TYPE"
@@ -422,18 +431,18 @@ class SetProgramOptionsCMake(SetProgramOptions):
         # PARENT_SCOPE forces Type-1 (i.e., non-cache var)
         # - This will override CACHE, at least as of CMake 3.21.x
         if output['PARENT_SCOPE']:
-            output['VARIANT'] = 1
+            output['VARIANT'] = VarType.NON_CACHE
 
         # FORCE implies CACHE. If type wasn't provided then it's a STRING
         elif output['FORCE']:
-            output['VARIANT'] = 2
+            output['VARIANT'] = VarType.CACHE
 
         # If a TYPE is provided then it's a type-2 (CACHE) assignment.
         elif output['TYPE'] is not None:
-            output['VARIANT'] = 2
+            output['VARIANT'] = VarType.CACHE
 
         # Otherwise, a simple set is a type-1
         else:
-            output['VARIANT'] = 1
+            output['VARIANT'] = VarType.NON_CACHE
 
         return output
