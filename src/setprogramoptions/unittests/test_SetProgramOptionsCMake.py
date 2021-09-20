@@ -8,6 +8,8 @@ import sys
 
 sys.dont_write_bytecode = True
 
+import contextlib
+import io
 import os
 
 
@@ -627,6 +629,84 @@ class SetProgramOptionsTestCMake(TestCase):
 
         print("OK")
         return 0
+
+    def test_SetProgramOptionsCMake_gen_option_list_bash_unresolved_cmake_var_01(self):
+        """
+        Tests what we do with an unresolved cmake variable encountered in the
+        bash generator. The hitch is that if we replace the unresolved cmake
+        var with an empty string we may be allowing a ``cmake-fragment`` and a
+        ``bash command`` to diverge sicne the cmake fragment would have additional
+        context of pre-existing variables that *might exist* versus the bash command
+        where a cmake variable *definitely will not exist*.
+        """
+        parser = self._create_standard_parser()
+        section = "TEST_CMAKE_VAR_IN_BASH_GENERATOR"
+        print("Section  : {}".format(section))
+
+        print("-----[ TEST BEGIN ]----------------------------------------")
+        # Test 1: Validate exception is raised when `exception_control_level`
+        #         is the default (4).
+        with self.assertRaises(ValueError):
+            option_list_actual = parser.gen_option_list(section, generator='bash')
+        print("-----[ TEST END ]------------------------------------------")
+
+        print("-----[ TEST BEGIN ]----------------------------------------")
+        # Test 2: Reduce the `exception_control_level` so that the exception is
+        #         not generated.
+        #         - Sets `exception_control_level` to 3
+        #         - Sets `exception_control_compact_warnings` to False
+        # Note: This test is sensitive to formatting changes to `ExceptionControl`
+        #       if this is a big problem we may need to change this in the future
+        #       to be less sensitive to stdout.
+        option_list_expect = [
+            '-DFOO_VAR:STRING="FOO"',
+            '-DFOO_VAR:STRING="BAR "'
+        ]
+        parser.exception_control_level = 3
+        parser.exception_control_compact_warnings = False
+        with io.StringIO() as m_stdout:
+            with contextlib.redirect_stdout(m_stdout):
+                option_list_actual = parser.gen_option_list(section, generator='bash')
+
+                # Check that the output matches
+                self.assertListEqual(option_list_expect, option_list_actual)
+
+                # Check that the exception-control warning message gets printed
+                self.assertIn("EXCEPTION SKIPPED", m_stdout.getvalue())
+                self.assertIn("Event Type : MINOR", m_stdout.getvalue())
+                self.assertIn("Exception  : ValueError", m_stdout.getvalue())
+        print("-----[ TEST END ]------------------------------------------")
+
+        print("-----[ TEST BEGIN ]----------------------------------------")
+        # Test 2: Repeat the previous test but with *compact* warnings from
+        #         `exception_control_compact_warnings` set to True to enable
+        #         compact warnings.
+        #         - Sets `exception_control_level` to 3
+        #         - Sets `exception_control_compact_warnings` to True
+        # Note: This test is sensitive to formatting changes to `ExceptionControl`
+        #       if this is a big problem we may need to change this in the future
+        #       to be less sensitive to stdout.
+        option_list_expect = [
+            '-DFOO_VAR:STRING="FOO"',
+            '-DFOO_VAR:STRING="BAR "'
+        ]
+        parser.exception_control_level = 3
+        parser.exception_control_compact_warnings = True
+        with io.StringIO() as m_stdout:
+            with contextlib.redirect_stdout(m_stdout):
+                option_list_actual = parser.gen_option_list(section, generator='bash')
+
+                # Check that the output matches
+                self.assertListEqual(option_list_expect, option_list_actual)
+
+                # Check that the exception-control warning message gets printed
+                self.assertIn("EXCEPTION SKIPPED", m_stdout.getvalue())
+                self.assertIn("(MINOR : ValueError)", m_stdout.getvalue())
+        print("-----[ TEST END ]------------------------------------------")
+
+        print("OK")
+        return 0
+
 
     def _create_standard_parser(
         self, filename=DEFAULT_VALUE(), debug_level=5, ece_level=4, ece_compact=False
