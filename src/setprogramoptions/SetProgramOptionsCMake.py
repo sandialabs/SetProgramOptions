@@ -33,10 +33,8 @@ will instruct CMake to make that variable non-cache. Care should be taken when
 using ``PARENT_SCOPE`` as combining it with the usual CACHE operations results
 in CMake creating a non-cached variable whose contents are the list containing
 ``<varname>;CACHE;<type>;doc string``. As a result, the BASH generator issues
-warnings with no generated command line arguments when either:
- 1. ``PARENT_SCOPE`` or;
- 2. solely a variable name AND variable value.
-are passed in to `opt-set-cmake-var`.
+warnings with no generated command line arguments when either 1. ``PARENT_SCOPE``
+OR 2. solely a variable name AND variable value are passed in to `opt-set-cmake-var`.
 
 See CMake documentation on the `set() <https://cmake.org/cmake/help/latest/command/set.html>`_
 command for more information on how fragment file entries are generated.
