@@ -109,7 +109,6 @@ class ExpandVarsInText(ExceptionControl):
 
     def __init__(self):
         self.exception_control_level = 4
-        self.exception_control_compact_warnings = True
 
     class VariableFieldData(object):
         """
@@ -526,6 +525,7 @@ class SetProgramOptions(ConfigParserEnhanced):
 
                 # Update the var formatter's ECL to match the current value.
                 self._var_formatter.exception_control_level = self.exception_control_level
+                self._var_formatter.exception_control_compact_warnings = self.exception_control_compact_warnings
 
                 # format the value
                 formatter = self._var_formatter

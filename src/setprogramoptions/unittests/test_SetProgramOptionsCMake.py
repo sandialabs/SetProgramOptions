@@ -8,6 +8,8 @@ import sys
 
 sys.dont_write_bytecode = True
 
+import contextlib
+import io
 import os
 
 
@@ -154,8 +156,8 @@ class SetProgramOptionsTestCMake(TestCase):
             '-G=Ninja',
             '-DTrilinos_ENABLE_COMPLEX:BOOL=ON',
             '-DTrilinos_ENABLE_THREAD_SAFE:BOOL=ON',
-            '-DTrilinos_PARALLEL_COMPILE_JOBS_LIMIT=20',
-            '-DTrilinos_PARALLEL_LINK_JOBS_LIMIT=4',
+                                                       #            '-DTrilinos_PARALLEL_COMPILE_JOBS_LIMIT=20',
+                                                       #            '-DTrilinos_PARALLEL_LINK_JOBS_LIMIT=4',
             '-DTrilinos_ENABLE_Kokkos:BOOL=ON',
             '-DTrilinos_ENABLE_KokkosCore:BOOL=ON',
             '-DTrilinos_ENABLE_KokkosKernels:BOOL=ON',
@@ -178,6 +180,7 @@ class SetProgramOptionsTestCMake(TestCase):
         Test the ``gen_option_list`` method using the ``bash`` generator.
         """
         parser = self._create_standard_parser()
+        # parser.exception_control_compact_warnings = True
 
         print("-----[ TEST BEGIN ]----------------------------------------")
         section = "TEST_VAR_EXPANSION_UPDATE_01"
@@ -191,16 +194,17 @@ class SetProgramOptionsTestCMake(TestCase):
         option_list_expect = [
             'cmake',
             '-DCMAKE_CXX_FLAGS:STRING="${LDFLAGS} -foo"',
-            '-DCMAKE_CXX_FLAGS:STRING="${LDFLAGS} -foo -bar"',
         ]
 
         option_list_actual = parser.gen_option_list(section, generator="bash")
         pprint(option_list_actual, width=200)
 
         self.assertListEqual(option_list_expect, option_list_actual)
+        print("OK")
         print("-----[ TEST END ]------------------------------------------")
 
         print("-----[ TEST BEGIN ]----------------------------------------")
+        # Update 03 will generate the update option
         section = "TEST_VAR_EXPANSION_UPDATE_03"
         print("Section  : {}".format(section))
 
@@ -212,16 +216,16 @@ class SetProgramOptionsTestCMake(TestCase):
         option_list_expect = [
             'cmake',
             '-DCMAKE_CXX_FLAGS:STRING="${LDFLAGS} -foo"',
-            '-DCMAKE_CXX_FLAGS:STRING="${LDFLAGS} -foo -bar"',
-            '-DCMAKE_CXX_FLAGS:STRING="${LDFLAGS} -foo -bar -bif"',
+            '-DCMAKE_CXX_FLAGS:STRING="${LDFLAGS} -foo -bif"',
         ]
 
         option_list_actual = parser.gen_option_list(section, generator="bash")
         pprint(option_list_actual, width=200)
 
         self.assertListEqual(option_list_expect, option_list_actual)
-        print("-----[ TEST END ]------------------------------------------")
         print("OK")
+        print("-----[ TEST END ]------------------------------------------")
+
         return 0
 
     def test_SetProgramOptionsCMake_gen_option_list_bash_expandvars_with_unknown_cmake_var_ecl3(self):
@@ -230,6 +234,7 @@ class SetProgramOptionsTestCMake(TestCase):
         ExpandVarsInTextCMake is set to 3 or lower. This should generate a WARNING.
         """
         parser = self._create_standard_parser()
+        parser.exception_control_compact_warnings = False
         parser.exception_control_level = 3
 
         print("-----[ TEST BEGIN ]----------------------------------------")
@@ -243,10 +248,7 @@ class SetProgramOptionsTestCMake(TestCase):
 
         # what answer do we EXPECT:
         option_list_expect = [
-            'cmake',
-            '-DCMAKE_CXX_FLAGS:STRING="${LDFLAGS} -foo"',
-            '-DCMAKE_CXX_FLAGS:STRING="${LDFLAGS} -foo -bar"',
-            '-DCMAKE_F90_FLAGS:STRING=" -baz"'
+            'cmake', '-DCMAKE_CXX_FLAGS:STRING="${LDFLAGS} -foo"', '-DCMAKE_F90_FLAGS:STRING=" -baz"'
         ]
 
         # Generate the BASH entries:
@@ -277,7 +279,7 @@ class SetProgramOptionsTestCMake(TestCase):
 
         # Generate a BASH script representing the instructions in the section.
         with self.assertRaises(ValueError):
-            option_list_actual = parser.gen_option_list(section, generator="bash")
+            parser.gen_option_list(section, generator="bash")
 
         print("-----[ TEST END ]------------------------------------------")
 
@@ -338,7 +340,6 @@ class SetProgramOptionsTestCMake(TestCase):
 
         option_list_expect = [
             'set(CMAKE_CXX_FLAGS "$ENV{LDFLAGS} -foo" CACHE STRING "from .ini configuration")',
-            'set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -bar" CACHE STRING "from .ini configuration")',
             'set(CMAKE_F90_FLAGS "${CMAKE_F90_FLAGS} -baz" CACHE STRING "from .ini configuration")'
         ]
 
@@ -350,7 +351,69 @@ class SetProgramOptionsTestCMake(TestCase):
         self.assertListEqual(option_list_expect, option_list_actual)
 
         print("-----[ TEST END ]------------------------------------------")
+        print("OK")
 
+        # Test that the CMake generator will generate a sequence of operations
+        # that don't include a FORCE option on an update of an existing CACHE
+        # value. As far as SPOCM is concerned, it'll generate the CMake as
+        # defined in the .ini file.
+        print("-----[ TEST BEGIN ]----------------------------------------")
+        section = "TEST_VAR_EXPANSION_UPDATE_01"
+        print("Section  : {}".format(section))
+
+        # parse a section
+        self._execute_parser(parser, section)
+
+        parser.gen_option_list(section, generator="cmake_fragment")
+
+        option_list_expect = [
+            'set(CMAKE_CXX_FLAGS "$ENV{LDFLAGS} -foo" CACHE STRING "from .ini configuration")',
+            'set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -bar" CACHE STRING "from .ini configuration")',
+        ]
+
+        option_list_actual = parser.gen_option_list(section, generator="cmake_fragment")
+
+        print("Expected Output:\n{}\n".format("\n".join(option_list_expect)))
+        print("Actual Output:\n{}\n".format("\n".join(option_list_actual)))
+
+        self.assertListEqual(option_list_expect, option_list_actual)
+
+        print("-----[ TEST END ]------------------------------------------")
+        print("OK")
+
+        # Test that the CMake generator will generate a sequence of operations
+        # that do include a FORCE option on an update of an existing CACHE
+        # value. As far as SPOCM is concerned w/rt to CMake fragments, we will
+        # generate what the .ini file tells us to do and respect that the CMake
+        # engine will operate as the CMake engine does.
+        print("-----[ TEST BEGIN ]----------------------------------------")
+        section = "TEST_VAR_EXPANSION_UPDATE_03"
+        print("Section  : {}".format(section))
+
+        # parse a section
+        self._execute_parser(parser, section)
+
+        parser.gen_option_list(section, generator="cmake_fragment")
+
+        option_list_expect = [
+                                                                                                           # Sets CMAKE_CXX_FLAGS the _first_ time, CMAKE_CXX_FLAGS would be set.
+            'set(CMAKE_CXX_FLAGS "$ENV{LDFLAGS} -foo" CACHE STRING "from .ini configuration")',
+                                                                                                           # Tries to update CMAKE_CXX_FLAGS the _second_ time without FORCE.
+                                                                                                           # CMake will not save this.
+            'set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -bar" CACHE STRING "from .ini configuration")',
+                                                                                                           # Tries to update CMAKE_CXX_FLAGS again but this time uses FORCE.
+                                                                                                           # CMake will save this updated value.
+            'set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -bif" CACHE STRING "from .ini configuration" FORCE)',
+        ]
+
+        option_list_actual = parser.gen_option_list(section, generator="cmake_fragment")
+
+        print("Expected Output:\n{}\n".format("\n".join(option_list_expect)))
+        print("Actual Output:\n{}\n".format("\n".join(option_list_actual)))
+
+        self.assertListEqual(option_list_expect, option_list_actual)
+
+        print("-----[ TEST END ]------------------------------------------")
         print("OK")
         return 0
 
@@ -359,21 +422,16 @@ class SetProgramOptionsTestCMake(TestCase):
         """
         parser = self._create_standard_parser()
 
-        print("-----[ TEST BEGIN ]----------------------------------------")
         section = "TEST_CMAKE_CACHE_PARAM_ORDER"
         print("Section  : {}".format(section))
-
-        # parse a section
         self._execute_parser(parser, section)
 
+        print("-----[ TEST BEGIN ]----------------------------------------")
         option_list_bash_expect = [
             '-DCMAKE_VAR_A:STRING="ON"',
-            '-DCMAKE_VAR_B=ON',
             '-DCMAKE_VAR_C:BOOL=ON',
-            '-DCMAKE_VAR_F:BOOL=ON',
-            '-DCMAKE_VAR_G:BOOL=ON',
-            '-DCMAKE_VAR_H=ON;CACHE;BOOL;',
-            '-DCMAKE_VAR_I=ON;CACHE;BOOL;'
+            '-DCMAKE_VAR_D:BOOL=ON',
+            '-DCMAKE_VAR_E:BOOL=ON',
         ]
 
         option_list_bash_actual = parser.gen_option_list(section, generator="bash")
@@ -383,10 +441,10 @@ class SetProgramOptionsTestCMake(TestCase):
             'set(CMAKE_VAR_A ON CACHE STRING "from .ini configuration" FORCE)',
             'set(CMAKE_VAR_B ON PARENT_SCOPE)',
             'set(CMAKE_VAR_C ON CACHE BOOL "from .ini configuration")',
-            'set(CMAKE_VAR_F ON CACHE BOOL "from .ini configuration" FORCE)',
-            'set(CMAKE_VAR_G ON CACHE BOOL "from .ini configuration" FORCE)',
-            'set(CMAKE_VAR_H ON CACHE BOOL "from .ini configuration" PARENT_SCOPE)',
-            'set(CMAKE_VAR_I ON CACHE BOOL "from .ini configuration" PARENT_SCOPE)',
+            'set(CMAKE_VAR_D ON CACHE BOOL "from .ini configuration" FORCE)',
+            'set(CMAKE_VAR_E ON CACHE BOOL "from .ini configuration" FORCE)',
+            'set(CMAKE_VAR_F ON CACHE BOOL "from .ini configuration" PARENT_SCOPE)',
+            'set(CMAKE_VAR_G ON CACHE BOOL "from .ini configuration" PARENT_SCOPE)',
         ]
 
         option_list_cmake_fragment_actual = parser.gen_option_list(section, generator="cmake_fragment")
@@ -394,7 +452,7 @@ class SetProgramOptionsTestCMake(TestCase):
         print("-----[ TEST END ]------------------------------------------")
 
         print("OK")
-        return
+        return 0
 
     def test_SetProgramOptionsCMake_param_order_02(self):
         """
@@ -417,7 +475,36 @@ class SetProgramOptionsTestCMake(TestCase):
         print("-----[ TEST END ]------------------------------------------")
 
         print("OK")
-        return
+        return 0
+
+    def test_SetProgramOptionsCMake_bash_generator_ignores_PARENT_SCOPE(self):
+        """
+        Verify that the bash generator will not add a ``-D`` entry for a
+        ``opt-set-cmake-var`` that has the ``PARENT_SCOPE`` flag since that
+        will always force CMake to create a type-1 (non-cache) var assignment.
+        """
+        parser = self._create_standard_parser()
+
+        section = "TEST_CMAKE_PARENT_SCOPE_NOT_BASH"
+        print("Section  : {}".format(section))
+
+        print("-----[ TEST BEGIN ]----------------------------------------")
+        option_list_bash_expect = []
+        option_list_bash_actual = parser.gen_option_list(section, generator="bash")
+        self.assertListEqual(option_list_bash_expect, option_list_bash_actual)
+        print("-----[ TEST END ]------------------------------------------")
+
+        print("-----[ TEST BEGIN ]----------------------------------------")
+        option_list_cmake_fragment_expect = [
+            'set(FOO_VAR_A "FOO_VAL A" PARENT_SCOPE)',
+            'set(FOO_VAR_B "FOO_VAL B" CACHE STRING "from .ini configuration" PARENT_SCOPE)'
+        ]
+        option_list_cmake_fragment_actual = parser.gen_option_list(section, generator="cmake_fragment")
+        self.assertListEqual(option_list_cmake_fragment_expect, option_list_cmake_fragment_actual)
+        print("-----[ TEST END ]------------------------------------------")
+
+        print("OK")
+        return 0
 
     def test_SetProgramOptionsCMake_fail_on_FORCE_and_PARENT_SCOPE(self):
         """
@@ -485,24 +572,141 @@ class SetProgramOptionsTestCMake(TestCase):
         """
         parser = self._create_standard_parser()
 
-        print("-----[ TEST BEGIN ]----------------------------------------")
         section = "TEST_CMAKE_VAR_REMOVE"
         print("Section  : {}".format(section))
-        option_list_bash_actual = parser.gen_option_list('TEST_CMAKE_VAR_REMOVE', 'bash')
-        option_list_bash_expect = ['-DBAR_TEST=BAR', '-DFOO=BAZ']
+
+        print("-----[ TEST BEGIN ]----------------------------------------")
+        option_list_bash_actual = parser.gen_option_list(section, 'bash')
+        option_list_bash_expect = ['-DBAR_TEST:STRING="BAR"', '-DBAZ_TEST:STRING="BAZ"']
         self.assertListEqual(option_list_bash_expect, option_list_bash_actual)
         print("-----[ TEST END ]------------------------------------------")
 
         print("-----[ TEST BEGIN ]----------------------------------------")
-        section = "TEST_CMAKE_VAR_REMOVE"
-        print("Section  : {}".format(section))
-        option_list_cmake_fragment_actual = parser.gen_option_list('TEST_CMAKE_VAR_REMOVE', 'cmake_fragment')
-        option_list_cmake_fragment_expect = ['set(BAR_TEST BAR)', 'set(FOO BAZ)']
+        option_list_cmake_fragment_actual = parser.gen_option_list(section, 'cmake_fragment')
+        option_list_cmake_fragment_expect = [
+            'set(BAR_TEST BAR CACHE STRING "from .ini configuration")',
+            'set(BAZ_TEST BAZ CACHE STRING "from .ini configuration")'
+        ]
         self.assertListEqual(option_list_cmake_fragment_expect, option_list_cmake_fragment_actual)
         print("-----[ TEST END ]------------------------------------------")
 
         print("OK")
         return 0
+
+    def test_SetProgramOptionsCMake_FORCE_only_for_bash(self):
+        """
+        Test that an ``opt-set-cmake-var`` that has a FORCE but does
+        not specify a TYPE will be assigned STRING by default and will
+        generate the appropriate ``-D`` entry.
+
+            [TEST_CMAKE_VAR_FORCE_ONLY]
+            opt-set-cmake-var FOO FORCE : "BAR"
+
+        should generate:
+
+            -DFOO:STRING="BAR"
+        """
+        parser = self._create_standard_parser()
+
+        section = "TEST_CMAKE_VAR_FORCE_ONLY"
+        print("Section  : {}".format(section))
+
+        print("-----[ TEST BEGIN ]----------------------------------------")
+        option_list_bash_actual = parser.gen_option_list(section, 'bash')
+        option_list_bash_expect = [
+            '-DFOO:STRING="BAR"',
+        ]
+        self.assertListEqual(option_list_bash_expect, option_list_bash_actual)
+        print("-----[ TEST END ]------------------------------------------")
+
+        print("-----[ TEST BEGIN ]----------------------------------------")
+        option_list_cmake_fragment_actual = parser.gen_option_list(section, 'cmake_fragment')
+        option_list_cmake_fragment_expect = [
+            'set(FOO BAR CACHE STRING "from .ini configuration" FORCE)',
+        ]
+        self.assertListEqual(option_list_cmake_fragment_expect, option_list_cmake_fragment_actual)
+        print("-----[ TEST END ]------------------------------------------")
+
+        print("OK")
+        return 0
+
+    def test_SetProgramOptionsCMake_gen_option_list_bash_unresolved_cmake_var_01(self):
+        """
+        Tests what we do with an unresolved cmake variable encountered in the
+        bash generator. The hitch is that if we replace the unresolved cmake
+        var with an empty string we may be allowing a ``cmake-fragment`` and a
+        ``bash command`` to diverge sicne the cmake fragment would have additional
+        context of pre-existing variables that *might exist* versus the bash command
+        where a cmake variable *definitely will not exist*.
+        """
+        parser = self._create_standard_parser()
+        section = "TEST_CMAKE_VAR_IN_BASH_GENERATOR"
+        print("Section  : {}".format(section))
+
+        print("-----[ TEST BEGIN ]----------------------------------------")
+        # Test 1: Validate exception is raised when `exception_control_level`
+        #         is the default (4).
+        with self.assertRaises(ValueError):
+            option_list_actual = parser.gen_option_list(section, generator='bash')
+        print("-----[ TEST END ]------------------------------------------")
+
+        print("-----[ TEST BEGIN ]----------------------------------------")
+        # Test 2: Reduce the `exception_control_level` so that the exception is
+        #         not generated.
+        #         - Sets `exception_control_level` to 3
+        #         - Sets `exception_control_compact_warnings` to False
+        # Note: This test is sensitive to formatting changes to `ExceptionControl`
+        #       if this is a big problem we may need to change this in the future
+        #       to be less sensitive to stdout.
+        option_list_expect = [
+            '-DFOO_VAR:STRING="FOO"',
+            '-DFOO_VAR:STRING="BAR "'
+        ]
+        parser.exception_control_level = 3
+        parser.exception_control_compact_warnings = False
+        with io.StringIO() as m_stdout:
+            with contextlib.redirect_stdout(m_stdout):
+                option_list_actual = parser.gen_option_list(section, generator='bash')
+
+                # Check that the output matches
+                self.assertListEqual(option_list_expect, option_list_actual)
+
+                # Check that the exception-control warning message gets printed
+                self.assertIn("EXCEPTION SKIPPED", m_stdout.getvalue())
+                self.assertIn("Event Type : MINOR", m_stdout.getvalue())
+                self.assertIn("Exception  : ValueError", m_stdout.getvalue())
+        print("-----[ TEST END ]------------------------------------------")
+
+        print("-----[ TEST BEGIN ]----------------------------------------")
+        # Test 2: Repeat the previous test but with *compact* warnings from
+        #         `exception_control_compact_warnings` set to True to enable
+        #         compact warnings.
+        #         - Sets `exception_control_level` to 3
+        #         - Sets `exception_control_compact_warnings` to True
+        # Note: This test is sensitive to formatting changes to `ExceptionControl`
+        #       if this is a big problem we may need to change this in the future
+        #       to be less sensitive to stdout.
+        option_list_expect = [
+            '-DFOO_VAR:STRING="FOO"',
+            '-DFOO_VAR:STRING="BAR "'
+        ]
+        parser.exception_control_level = 3
+        parser.exception_control_compact_warnings = True
+        with io.StringIO() as m_stdout:
+            with contextlib.redirect_stdout(m_stdout):
+                option_list_actual = parser.gen_option_list(section, generator='bash')
+
+                # Check that the output matches
+                self.assertListEqual(option_list_expect, option_list_actual)
+
+                # Check that the exception-control warning message gets printed
+                self.assertIn("EXCEPTION SKIPPED", m_stdout.getvalue())
+                self.assertIn("(MINOR : ValueError)", m_stdout.getvalue())
+        print("-----[ TEST END ]------------------------------------------")
+
+        print("OK")
+        return 0
+
 
     def _create_standard_parser(
         self, filename=DEFAULT_VALUE(), debug_level=5, ece_level=4, ece_compact=False
@@ -550,4 +754,3 @@ class SetProgramOptionsTestCMake(TestCase):
 
 
 
-# TEST_CMAKE_CACHE_PARAM_TEST_02
