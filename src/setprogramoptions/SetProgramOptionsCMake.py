@@ -54,7 +54,7 @@ from enum import Enum
 #from textwrap import dedent
 
 # For type-hinting
-from typing import List, Set, Dict, Tuple, Optional, Iterable
+# from typing import List, Set, Dict, Tuple, Optional, Iterable
 
 try:                         # pragma: no cover
                              # @final decorator, requires Python 3.8.x
@@ -67,6 +67,7 @@ from pprint import pprint
 import shlex
 
 from configparserenhanced import *
+from configparserenhanced import TypedProperty
 
 from .SetProgramOptions import SetProgramOptions
 from .SetProgramOptions import ExpandVarsInText
@@ -80,11 +81,19 @@ from .SetProgramOptions import ExpandVarsInText
 # ===============================
 
 
-
 class ExpandVarsInTextCMake(ExpandVarsInText):
     """
     Extends ``ExpandVarsInText`` class to add in support for a ``CMAKE`` generator.
     """
+
+    # Typed Property `_bashgen_unhandled_cmake_var_eventtype`:
+    # sets the exception_control_event level for when an unresolved
+    # `CMake` var is encountered by the BASH generator.
+    _bashgen_unhandled_cmake_var_eventtype = \
+        TypedProperty.typed_property("_bashgen_unhandled_cmake_var_eventtype",
+                                     expected_type=str,
+                                     default="MINOR",
+                                     internal_type=str)
 
     def __init__(self):
         self.exception_control_level = 3
@@ -112,9 +121,10 @@ class ExpandVarsInTextCMake(ExpandVarsInText):
         else:
             # If self.exception_control_level is >= 4 then we'll raise the error
             # instead of sending a warning.
-            msg = f"Unhandled variable expansion for `{field.varname}` in a BASH file."
+            # Change this to `CATASTROPHIC` to always throw the error.
+            msg = f"Unresolved variable expansion for `{field.varname}` in a BASH file."
             msg += " CMake variables are only valid in a CMake fragment file."
-            self.exception_control_event("MINOR", ValueError, msg)
+            self.exception_control_event(self._bashgen_unhandled_cmake_var_eventtype, ValueError, msg)
             output = ""
         return output
 
@@ -331,7 +341,7 @@ class SetProgramOptionsCMake(SetProgramOptions):
     # ---------------------------------------------------------------
 
     @ConfigParserEnhanced.operation_handler
-    def _handler_opt_set_cmake_var(self, section_name, handler_parameters) -> int:
+    def _handler_opt_set_cmake_var(self, section_name: str, handler_parameters) -> int:
         """Handler for ``opt-set-cmake-var``
 
         Called By: ``configparserenhanced.ConfigParserEnhanced`` parser.
