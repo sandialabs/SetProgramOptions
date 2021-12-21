@@ -1,11 +1,6 @@
 #!/usr/bin/env python3
 # -*- mode: python; py-indent-offset: 4; py-continuation-offset: 4 -*-
 #===============================================================================
-# Copyright Notice
-# ----------------
-# Copyright 2021 National Technology & Engineering Solutions of Sandia,
-# LLC (NTESS). Under the terms of Contract DE-NA0003525 with NTESS,
-# the U.S. Government retains certain rights in this software.
 #
 # License (3-Clause BSD)
 # ----------------------
