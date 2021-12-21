@@ -12,6 +12,7 @@ Welcome to SetProgramOptions documentation!
 
    SetProgramOptions
    SetProgramOptionsCMake
+   License <License>
 
 
 
@@ -21,3 +22,5 @@ Indices and tables
 * :ref:`genindex`
 * :ref:`modindex`
 * :ref:`search`
+
+
