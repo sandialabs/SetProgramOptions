@@ -28,3 +28,8 @@ tests
 
 poetry.lock
 venv-*
+
+*.bak
+doc/SetProgramOptions-Docs
+
+_*.log

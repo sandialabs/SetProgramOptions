@@ -17,6 +17,13 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 #### Todo (for Unreleased)
 -->
 
+## [0.5.0] 2021-12-20
+#### Added
+- Open Source License approved. Adding 3-Clause BSD license files and
+  source headers.
+- github actions files for CI/CD testing will be added to this version
+  number once code is posted to https://github.com/sandialabs/SetProgramOptions
+
 ## [0.4.0] 2021-11-23
 #### Added
 #### Changed

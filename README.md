@@ -1,20 +1,26 @@
+<!--
 [![pipeline status](https://gitlab-ex.sandia.gov/trilinos-devops-consolidation/code/SetProgramOptions/badges/master/pipeline.svg)](https://gitlab-ex.sandia.gov/trilinos-devops-consolidation/code/SetProgramOptions/-/commits/master)
 [![coverage report](https://gitlab-ex.sandia.gov/trilinos-devops-consolidation/code/SetProgramOptions/badges/master/coverage.svg)](http://10.202.35.89:8080/SetProgramOptions/coverage/index.html)
 [![Generic badge](https://img.shields.io/badge/docs-latest-green.svg)](http://10.202.35.89:8080/SetProgramOptions/doc/index.html)
+-->
+<!-- Github Badges -->
+[![SetProgramOptions Testing](https://github.com/sandialabs/SetProgramOptions/actions/workflows/test-driver-core.yml/badge.svg)](https://github.com/sandialabs/SetProgramOptions/actions/workflows/test-driver-core.yml)
+[![Documentation Status](https://readthedocs.org/projects/SetProgramOptions/badge/?version=latest)](https://setprogramoptions.readthedocs.io/en/latest/?badge=latest)
+
 
 SetProgramOptions
 =================
-The `SetProgramOptions` package extends `ConfigParserEnhanced` to enable the processing
+The `SetProgramOptions` package extends [`ConfigParserEnhanced`][2] to enable the processing
 of **.ini** files that specify *Program Options*.
 
-`SetProgramOptions` supports all the _operations_ that `ConfigParserEnhanced` supports
+`SetProgramOptions` supports all the _operations_ that [`ConfigParserEnhanced`][2] supports
 and adds some of its own.
 
-| Operation    | Format                                        | Defined By             |
-| ------------ | --------------------------------------------- | ---------------------- |
-| `use`        | `use <section>`                               | `ConfigParserEnhanced` |
-| `opt-set`    | `opt-set Param1 [Param2..ParamN] [: <VALUE>]` | `SetProgramOptions`    |
-| `opt-remove` | `opt-remove Param [SUBSTR]`                   | `SetProgramOptions`    |
+| Operation    | Format                                        | Defined By                  |
+| ------------ | --------------------------------------------- | --------------------------- |
+| `use`        | `use <section>`                               | [`ConfigParserEnhanced`][2] |
+| `opt-set`    | `opt-set Param1 [Param2..ParamN] [: <VALUE>]` | `SetProgramOptions`         |
+| `opt-remove` | `opt-remove Param [SUBSTR]`                   | `SetProgramOptions`         |
 
 
 INI File Format
@@ -103,7 +109,7 @@ Operations Explained
 --------------------
 
 ### `use`
-The `use` operation is provided by `ConfigParserEnhanced`. Please see its documentation on this command and its use.
+The `use` operation is provided by [`ConfigParserEnhanced`][2]. Please see its documentation on this command and its use.
 
 ### `opt-set`
 Sets a generic _command line_ style option.
@@ -377,3 +383,6 @@ Done
 
 
 [1]: https://cmake.org/cmake/help/latest/command/set.html
+[2]: https://github.com/sandialabs/ConfigParserEnhanced
+
+
