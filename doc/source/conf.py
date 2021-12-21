@@ -57,7 +57,7 @@ from pathlib import Path
 import os
 import sys
 
-sys.path.append( str(Path.cwd().parent.parent.resolve().joinpath(Path("src")) ))
+sys.path.append(str(Path.cwd().parent.parent.resolve().joinpath(Path("src"))))
 
 # -- Project information -----------------------------------------------------
 
@@ -110,9 +110,7 @@ html_theme = 'sphinx_rtd_theme'
 # so a file named "default.css" will overwrite the builtin "default.css".
 html_static_path = ['_static']
 
-html_css_files = [
-    'css/custom.css'
-]
+html_css_files = ['css/custom.css']
 
 
 
