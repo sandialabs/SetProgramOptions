@@ -5,8 +5,7 @@
 -->
 <!-- Github Badges -->
 [![SetProgramOptions Testing](https://github.com/sandialabs/SetProgramOptions/actions/workflows/test-driver-core.yml/badge.svg)](https://github.com/sandialabs/SetProgramOptions/actions/workflows/test-driver-core.yml)
-[![Documentation Status](https://readthedocs.org/projects/SetProgramOptions/badge/?version=latest)](https://setprogramoptions.readthedocs.io/en/latest/?badge=latest)
-
+[![Documentation Status](https://readthedocs.org/projects/setprogramoptions/badge/?version=latest)](https://setprogramoptions.readthedocs.io/en/latest/?badge=latest)
 
 SetProgramOptions
 =================
