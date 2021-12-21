@@ -70,7 +70,7 @@ jobs:
         run: |
           source ${{ env.venv-name }}/bin/activate
           python3 -m pytest --version
-          python3 -m pytest --cov=configparserenhanced --cov-report=term --cov-report=html --cov-config=.coveragerc --cov-report=html:${{ github.workspace }}/htmlcov
+          python3 -m pytest --cov=configparserenhanced --cov-report=term --cov-report=html --cov-report=html:${{ github.workspace }}/htmlcov --cov-config=.coveragerc
           ls -ltrhF ${{ github.workspace }}/htmlcov
 
       - name: Save Artifacts
