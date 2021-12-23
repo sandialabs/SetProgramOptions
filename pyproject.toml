@@ -1,38 +1,54 @@
 [tool.poetry]
 name = "setprogramoptions"
-version = "0.5.0"
-description = "Program options helper."
+description = "Program options configuration file reader using ConfigParserEnhanced."
+version = "0.5.0a0"
+license = "LICENSE"
+readme = "README.md"
+keywords = [
+    "Utility",
+    "Bash",
+    "Configuration",
+    "ConfigParserEnhanced",
+    "ConfigParser"
+]
 authors = [
     "William McLendon <wcmclen@sandia.gov>"
 ]
-readme = "README.md"
-documentation = "http://10.202.35.89:8080/SetProgramOptions/doc/index.html"
-repository = "https://gitlab-ex.sandia.gov/trilinos-devops-consolidation/code/SetProgramOptions"
+maintainers = [
+    "Sandia National Laboratories <wg-SetProgramOptions@sandia.gov>",
+]
+homepage      = "https://github.com/sandialabs/SetProgramOptions"
+documentation = "https://setprogramoptions.readthedocs.io/en/latest/"
+repository    = "https://github.com/sandialabs/SetProgramOptions"
 classifiers = [
-    'Development Status :: 3 - Alpha',
-    'Intended Audience :: DevOps',
+    'Development Status :: 5 - Production/Stable',
     'Intended Audience :: Developers',
-    'Programming Language :: Python :: 3',
+    'Intended Audience :: System Administrators',
+    'Intended Audience :: Other Audience',
+    'Programming Language :: Python :: 3.6',
+    'Programming Language :: Python :: 3.7',
+    'Programming Language :: Python :: 3.8',
+    'Programming Language :: Python :: 3.9',
+    'Programming Language :: Python :: 3.10',
+    'Programming Language :: Python :: 3.11',
     'Programming Language :: Python :: 3 :: Only',
+    'License :: OSI Approved :: BSD License',
 ]
 packages = [
     { include = 'setprogramoptions', from = 'src' }
 ]
-# include = [ "CHANGELOG.md" ]
+include = [ "CHANGELOG.md" ]
 
 
 [tool.poetry.urls]
-CI = "https://gitlab-ex.sandia.gov/trilinos-devops-consolidation/code/SetProgramOptions/-/pipelines"
-Issues = "https://gitlab-ex.sandia.gov/trilinos-devops-consolidation/code/SetProgramOptions/-/issues"
+CI     = "https://github.com/sandialabs/SetProgramOptions/actions"
+Issues = "https://github.com/sandialabs/SetProgramOptions/issues"
 
 
 [tool.poetry.dependencies]
 python = "^3.6"
 configparser = "^5.0"
 configparserenhanced = "^0.8"
-
-# deprecated
-# configparserenhanced = {git = "https://gitlab-ex.sandia.gov/trilinos-devops-consolidation/code/ConfigParserEnhanced.git", rev = "master"}
 
 
 [tool.poetry.dev-dependencies]

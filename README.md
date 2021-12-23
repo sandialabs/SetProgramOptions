@@ -379,5 +379,6 @@ Done
 
 [1]: https://cmake.org/cmake/help/latest/command/set.html
 [2]: https://github.com/sandialabs/ConfigParserEnhanced
-
+[3]: https://github.com/sandialabs/SetProgramOptions/blob/master/CHANGELOG.md
+[4]: https://setprogramoptions.readthedocs.io/en/latest/
 
