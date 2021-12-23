@@ -1,0 +1,39 @@
+--------------------------------------------------------------------------------
+- example-03.py
+--------------------------------------------------------------------------------
+filename: example-03.ini
+section_name = TEST_VAR_EXPANSION_UPDATE_01
+
+parser.configparserenhanceddata[TEST_VAR_EXPANSION_UPDATE_01]
+-------------------------------------------------------------
+{}
+
+Show parser.options
+-------------------
+{'TEST_VAR_EXPANSION_UPDATE_01': [{'type': ['opt_set'], 'value': None, 'params': ['cmake']},
+                                  {'type': ['opt_set_cmake_var'], 'value': '${LDFLAGS|ENV} -foo', 'params': ['CMAKE_CXX_FLAGS', 'STRING']},
+                                  {'type': ['opt_set_cmake_var'], 'value': '${CMAKE_CXX_FLAGS|CMAKE} -bar', 'params': ['CMAKE_CXX_FLAGS', 'STRING']}]}
+
+Bash Output
+-----------
+Note: The _second_ assignment to `CMAKE_CXX_FLAGS` is skipped by a BASH generator
+      without a `FORCE` option since by definition all CMake `-D` options on a 
+      BASH command line are both CACHE and FORCE. Within a CMake source fragment
+      changing an existing CACHE var requires a FORCE option to be set so we should
+      skip the second assignment to maintain consistency between the bash and cmake
+      fragment generators with respect to the CMakeCache.txt file that would be
+      generated.
+      The `WARNING` message below is terse since it's in compact form -- disable
+      the `exception_control_compact_warnings` flag to get the full warning message.
+
+!! EXCEPTION SKIPPED (WARNING : ValueError) @ File "/Users/wcmclen/Library/Python/3.9/lib/python/site-packages/setprogramoptions/SetProgramOptionsCMake.py", line 294, in _program_option_handler_opt_set_cmake_var_bash
+
+cmake \
+    -DCMAKE_CXX_FLAGS:STRING="${LDFLAGS} -foo"
+
+CMake Fragment
+--------------
+set(CMAKE_CXX_FLAGS "$ENV{LDFLAGS} -foo" CACHE STRING "from .ini configuration")
+set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -bar" CACHE STRING "from .ini configuration")
+
+Done.

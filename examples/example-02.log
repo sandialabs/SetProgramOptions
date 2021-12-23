@@ -1,0 +1,20 @@
+--------------------------------------------------------------------------------
+- example-02.py
+--------------------------------------------------------------------------------
+
+Bash output
+-----------
+cmake \
+   -G=Ninja \
+   -DMYPROJ_CXX_FLAGS:STRING="-O0 -fopenmp" \
+   -DMYPROJ_ENABLE_OPTION_A:BOOL=ON \
+   -DMYPROJ_ENABLE_OPTION_B:BOOL=ON \
+   /path/to/source/dir
+
+CMake fragment output
+---------------------
+set(MYPROJ_CXX_FLAGS "-O0 -fopenmp" CACHE STRING "from .ini configuration")
+set(MYPROJ_ENABLE_OPTION_A ON CACHE BOOL "from .ini configuration" FORCE)
+set(MYPROJ_ENABLE_OPTION_B ON CACHE BOOL "from .ini configuration")
+
+Done

@@ -46,7 +46,6 @@ jobs:
           source ${{ env.venv-name }}/bin/activate
           echo "VIRTUAL_ENV = ${VIRTUAL_ENV}"
           cd source
-          # python3 -m pip install wheel configparserenhanced @ git+https://github.com/sandialabs/ConfigParserEnhanced.git@master#egg=configparserenhanced
           python3 -m pip install wheel -r requirements.txt -r requirements-test.txt -r doc/requirements.txt
           #ls -ltrhF
 
@@ -68,18 +67,39 @@ jobs:
         with:
           path: source
 
-      - name: Execute
+      - name: Execute Unit Tests
         run: |
           source ${{ env.venv-name }}/bin/activate
+          echo "VIRTUAL_ENV = ${VIRTUAL_ENV}"
           cd source
           python3 -m pytest --version
-          #ls -ltrhF
-          echo "VIRTUAL_ENV = ${VIRTUAL_ENV}"
           python3 -m pytest --cov=setprogramoptions --cov-report=term --cov-report=html:${{ github.workspace }}/htmlcov --cov-config=.coveragerc
-          echo "htmlcov"
           ls -ltrhF ${{ github.workspace }}/htmlcov
 
-      - name: Save Artifacts
+      - name: Test Installation
+        run: |
+            source ${{ env.venv-name }}/bin/activate
+            echo "VIRTUAL_ENV = ${VIRTUAL_ENV}"
+            cd source
+            python3 -m pip install .
+
+      - name: Test Examples
+        run: |
+            source ${{ env.venv-name }}/bin/activate
+            echo "VIRTUAL_ENV = ${VIRTUAL_ENV}"
+            cd source/examples
+            python3 ./example-01.py
+            python3 ./example-02.py
+            python3 ./example-03.py
+
+      - name: Test Uninstaller
+        run: |
+            source ${{ env.venv-name }}/bin/activate
+            echo "VIRTUAL_ENV = ${VIRTUAL_ENV}"
+            cd source
+            python3 -m pip uninstall -y setprogramoptions
+
+      - name: Save Coverage Artifacts
         uses: actions/upload-artifact@v2
         with:
           name: coverage
