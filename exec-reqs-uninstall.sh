@@ -18,6 +18,7 @@ options=(
     -y
     -r requirements.txt
     -r requirements-test.txt
+    #-r requirements-build.txt
 )
 
 cmd="${python_exe} ${options[@]} ${projectname}"

@@ -29,7 +29,10 @@ Issues = "https://gitlab-ex.sandia.gov/trilinos-devops-consolidation/code/SetPro
 [tool.poetry.dependencies]
 python = "^3.6"
 configparser = "^5.0"
-configparserenhanced = {git = "https://gitlab-ex.sandia.gov/trilinos-devops-consolidation/code/ConfigParserEnhanced.git", rev = "master"}
+configparserenhanced = "^0.8"
+
+# deprecated
+# configparserenhanced = {git = "https://gitlab-ex.sandia.gov/trilinos-devops-consolidation/code/ConfigParserEnhanced.git", rev = "master"}
 
 
 [tool.poetry.dev-dependencies]

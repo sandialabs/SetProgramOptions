@@ -39,9 +39,9 @@ options=(
 python3 -m pytest ${options[@]}
 err=$?
 
-
 # Install the package
-execute_command_checked "python3 -m pip wheel --no-deps -w dist . >& _test-build-dist.log"
+# execute_command_checked "python3 -m pip wheel --no-deps -w dist . >& _test-build-dist.log"
+execute_command_checked "python3 -m build >& _test-build-dist.log"
 execute_command_checked "python3 -m pip install ${pip_opt_user} . >& _test-install.log"
 
 

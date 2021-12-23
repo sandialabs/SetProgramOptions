@@ -7,6 +7,13 @@
 # Source the common helpers script.
 source scripts/common.bash
 
+# Check if we're in a virtual environment
+pip_opt_user=""
+if [ -z ${VIRTUAL_ENV} ]; then
+    # if not in virtual environment
+    pip_opt_user="--user"
+fi
+
 printf "${yellow}"
 print_banner "INSTALL REQUIRED PACKAGES"
 printf "${normal}"
@@ -19,8 +26,9 @@ execute_command "${python_exe:?} --version"
 options=(
     -m pip
     install
-    --user
+    ${pip_opt_user}
     -r requirements.txt
+    -r requirements-build.txt
     -r requirements-test.txt
     -r doc/requirements.txt
 )

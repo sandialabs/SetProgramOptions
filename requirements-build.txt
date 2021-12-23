@@ -1,0 +1,13 @@
+#
+# Build/Distribution-specific requirements are in this file.
+# - Dependencies in requirements.txt are still needed.
+#
+
+# Build / Distribution Requirements
+setuptools >= 58.0
+build >= 0.7
+
+
+# (possibly) unnecessary packages
+# poetry >= 1.1
+

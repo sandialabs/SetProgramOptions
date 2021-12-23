@@ -3,10 +3,9 @@
 #
 
 # Core Requirements
-
+configparserenhanced
 
 # Privately hosted repositories
-#configparserenhanced @ git+ssh://git@gitlab-ex.sandia.gov/trilinos-devops-consolidation/code/ConfigParserEnhanced.git@master#egg=configparserenhanced
-
-configparserenhanced @ git+https://github.com/sandialabs/ConfigParserEnhanced.git@master#egg=configparserenhanced
+# configparserenhanced @ git+ssh://git@gitlab-ex.sandia.gov/trilinos-devops-consolidation/code/ConfigParserEnhanced.git@master#egg=configparserenhanced
+# configparserenhanced @ git+https://github.com/sandialabs/ConfigParserEnhanced.git@master#egg=configparserenhanced
 
