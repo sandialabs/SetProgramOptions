@@ -292,8 +292,13 @@ be provided in the `opt-set-cmake-var` operation in the .ini file:
 SetProgramOptionsCMake Examples
 -------------------------------
 
-### [example-02.ini](examples/example-02.ini)
+### Example 02
+
+**example-02.ini**
 ```ini
+#
+# example-02.ini
+#
 [CMAKE_COMMAND]
 opt-set cmake
 
@@ -304,9 +309,9 @@ opt-set -G : Ninja
 opt-set -G : "Unix Makefiles"
 
 [MYPROJ_OPTIONS]
-opt-set-cmake-var  MYPROJ_CXX_FLAGS                         : "-O0 -fopenmp"
-opt-set-cmake-var  MYPROJ_ENABLE_OPTION_A BOOL FORCE        : ON
-opt-set-cmake-var  MYPROJ_ENABLE_OPTION_B BOOL PARENT_SCOPE : ON
+opt-set-cmake-var  MYPROJ_CXX_FLAGS       STRING       : "-O0 -fopenmp"
+opt-set-cmake-var  MYPROJ_ENABLE_OPTION_A BOOL   FORCE : ON
+opt-set-cmake-var  MYPROJ_ENABLE_OPTION_B BOOL         : ON
 
 [MYPROJ_SOURCE_DIR]
 opt-set /path/to/source/dir
@@ -324,18 +329,22 @@ use MYPROJ_OPTIONS
 use MYPROJ_SOURCE_DIR
 ```
 
-### [example-02.py](examples/example-02.py)
+**example-02.py**
 ```python
 #!/usr/bin/env python3
-import os
-import sys
-
+# -*- mode: python; py-indent-offset: 4; py-continuation-offset: 4 -*-
+from pathlib import Path
 import setprogramoptions
+
+print(80*"-")
+print(f"- {Path(__file__).name}")
+print(80*"-")
+
 
 filename = "example-02.ini"
 popts = setprogramoptions.SetProgramOptionsCMake(filename)
 
-section  = "MYPROJ_CONFIGURATION_NINJA"
+section = "MYPROJ_CONFIGURATION_NINJA"
 popts.parse_section(section)
 
 # Generate BASH output
@@ -357,25 +366,26 @@ print("\nDone")
 Generates the output:
 ```bash
 $ python3 example-02.py
+--------------------------------------------------------------------------------
+- example-02.py
+--------------------------------------------------------------------------------
 
-Bash output
------------
+**Bash output**
 cmake \
    -G=Ninja \
-   -DMYPROJ_CXX_FLAGS="-O0 -fopenmp" \
+   -DMYPROJ_CXX_FLAGS:STRING="-O0 -fopenmp" \
    -DMYPROJ_ENABLE_OPTION_A:BOOL=ON \
    -DMYPROJ_ENABLE_OPTION_B:BOOL=ON \
    /path/to/source/dir
 
 CMake fragment output
 ---------------------
-set(MYPROJ_CXX_FLAGS "-O0 -fopenmp")
+set(MYPROJ_CXX_FLAGS "-O0 -fopenmp" CACHE STRING "from .ini configuration")
 set(MYPROJ_ENABLE_OPTION_A ON CACHE BOOL "from .ini configuration" FORCE)
-set(MYPROJ_ENABLE_OPTION_B ON CACHE BOOL "from .ini configuration" PARENT_SCOPE)
+set(MYPROJ_ENABLE_OPTION_B ON CACHE BOOL "from .ini configuration")
 
 Done
 ```
-
 
 [1]: https://cmake.org/cmake/help/latest/command/set.html
 [2]: https://github.com/sandialabs/ConfigParserEnhanced
