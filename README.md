@@ -112,7 +112,7 @@ SetProgramOptions Examples
 
 ### Example 1
 
-#### [example-01.ini](examples/example-01.ini)
+#### [example-01.ini][8]
 ```ini
 [BASH_VERSION]
 opt-set bash
@@ -133,7 +133,7 @@ use LS_LIST_TIME_REVERSED
 use LS_CUSTOM_TIME_STYLE
 ```
 
-#### [example-01.py](examples/example-01.py)
+#### [example-01.py][9]
 
 ```python
 #!/usr/bin/env python3
@@ -456,3 +456,5 @@ Done
 [5]: https://pypi.org/project/configparserenhanced/
 [6]: https://www.cmake.org/
 [7]: https://configparserenhanced.readthedocs.io/
+[8]: https://github.com/sandialabs/SetProgramOptions/blob/master/examples/example-01.ini
+[9]: https://github.com/sandialabs/SetProgramOptions/blob/master/examples/example-01.py
