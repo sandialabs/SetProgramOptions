@@ -9,12 +9,12 @@ The `SetProgramOptions` package extends [`ConfigParserEnhanced`][5] to enable th
 processing of **.ini** files that specify **command line program options**.
 
 As a subclass of ConfigParserEnhanced, SetProgramOptions supports all
-the _operations_ that [`ConfigParserEnhanced`][2] supports and adds some of its
+the _operations_ that [`ConfigParserEnhanced`][5] supports and adds some of its
 own. The following table notes the new **operations** that SetProgramOptions adds:
 
 | Operation    | Format                                        | Defined By                  |
 | ------------ | --------------------------------------------- | --------------------------- |
-| `use`        | `use <section>`                               | [`ConfigParserEnhanced`][2] |
+| `use`        | `use <section>`                               | [`ConfigParserEnhanced`][5] |
 | `opt-set`    | `opt-set Param1 [Param2..ParamN] [: <VALUE>]` | `SetProgramOptions`         |
 | `opt-remove` | `opt-remove Param [SUBSTR]`                   | `SetProgramOptions`         |
 
@@ -36,27 +36,32 @@ Supported Operations
 --------------------
 
 ### `use`
-The `use` operation is inherited from [`ConfigParserEnhanced`][2]. Please see its documentation on this command and its use.
+The `use` operation is inherited from [`ConfigParserEnhanced`][5]. Please see its documentation
+on this command and its use.
 
 ### `opt-set`
 Sets a generic _command line_ style option.
 
 The format of this is `opt-set Param1 [Param2] [Param3] ... [ParamN] : [VALUE]`
 
-In a _bash_ context, this operation attempts to generate an option for some command that will be executed.
-`SetProgramOptions` will concactenate the _Params_ together and then append `=VALUE` if a VALUE field is present.
+In a _bash_ context, this operation attempts to generate an option for some command
+that will be executed.
+`SetProgramOptions` will concactenate the _Params_ together and then append `=VALUE`
+if a VALUE field is present.
 For example, `opt-set Foo Bar : Baz` will become `FooBar=Baz`.
 
 
 ### `opt-remove`
-_Removes_ existing entries that have been processed up to the point the `opt-remove` is encountered that match a pattern.
+_Removes_ existing entries that have been processed up to the point the `opt-remove` is
+encountered that match a pattern.
 
 The format of this is `opt-remove Param [SUBSTR]`
 
-When a _remove_ is encountered, `SetProgramOptions` will search through all processed options and will delete any
-that contain any _Param-i_ that matches `Param`. By default the parameters much be an _exact match_ of `Param`, but
-if the optional `SUBSTR` parameter is provided then `SetProgramOptions` will treat `Param` as a substring and will
-remove all existing options if _any parameter contains Param_.
+When a _remove_ is encountered, `SetProgramOptions` will search through all processed
+options and will delete any that contain any _Param-i_ that matches `Param`.
+By default the parameters much be an _exact match_ of `Param`, but if the optional
+`SUBSTR` parameter is provided then `SetProgramOptions` will treat `Param` as a
+substring and will remove all existing options if _any parameter contains Param_.
 
 
 SetProgramOptions Config Files
@@ -447,6 +452,7 @@ Done
 [1]: https://cmake.org/cmake/help/latest/command/set.html
 [2]: https://github.com/sandialabs/ConfigParserEnhanced
 [3]: https://github.com/sandialabs/SetProgramOptions/blob/master/CHANGELOG.md
-[4]: https://setprogramoptions.readthedocs.io/en/latest
+[4]: https://setprogramoptions.readthedocs.io/
 [5]: https://pypi.org/project/configparserenhanced/
 [6]: https://www.cmake.org/
+[7]: https://configparserenhanced.readthedocs.io/
