@@ -26,7 +26,59 @@ Indices and Tables
 
 Overview
 ========
-TODO: This needs to be expanded for RTD.
+The ``SetProgramOptions`` package extends the
+`ConfigParserEnhanced <https://pypi.org/project/configparserenhanced/>`_
+package by adding additional *operations* for handling command-line
+options.
+
+The primary use case that provided the impetus to develop SetProgramOptions
+was to support complex configuration environments for a software project that
+is tested on a variety of platforms and architectures, including GPUs and HPC
+systems. This project is several million lines of code and has hundreds of
+CMake options in its configuration space.
+
+We developed SetProgramOptions and SetProgramOptions to allow our build system
+to use optimized .ini files to manage our configuration space.
+
+This package includes two classes:
+
+1. SetProgramOptions - A general purpose command line handler that handles
+   generic command line options.
+2. SetProgramOptionsCMake - A subclass of SetProgramOptions, this class further
+   extends SetProgramOptions by adding CMake-specific operations to provide
+   ease of use for CMake specific options. It also adds an additional generator
+   option to allow the generation of either *bash* style command line options
+   or a *CMake* source fragment file.
+
+An example .ini file using ``SetProgramOptions`` might look like:
+
+.. code-block:: ini
+    :linenos:
+
+    [Directory *nix]
+    opt-set ls
+
+This configuration is the SetProgramOptions version of a hello world example.
+Here, the ``opt-set ls`` option is specifying a single command line option
+which in this case is the command `ls`.
+
+We can expand this to add additional entries:
+
+.. code-block:: ini
+    :linenos:
+
+    [Directory *nix]
+    opt-set ls
+    opt-set -l
+    opt-set -r
+    opt-set -t
+    opt-remove -r
+
+When processed, this example would result in a concactenated string containing
+the command ``ls -l -t``. We threw in the ``opt-remove -r`` operation which
+*removed* the `-r` entry.
+
+For more details on how this is used, see the Examples section below.
 
 
 Examples

@@ -1,7 +1,7 @@
 [tool.poetry]
 name = "setprogramoptions"
 description = "Program options configuration file reader using ConfigParserEnhanced."
-version = "0.5.0"
+version = "0.5.0.1"
 license = "LICENSE"
 readme = "README.md"
 keywords = [

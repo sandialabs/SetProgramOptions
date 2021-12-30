@@ -17,6 +17,10 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 #### Todo (for Unreleased)
 -->
 
+## [0.5.1] 2021-12-30
+#### Changed
+- Documentation updates
+
 ## [0.5.0] 2021-12-20
 #### Added
 - Open Source License approved. Adding 3-Clause BSD license files and
