@@ -107,6 +107,11 @@ By not providing a default we force type consideration to be made explicitly dur
 of the .ini file.
 
 
+Linked Projects
+---------------
+- [ConfigParserEnhanced][5] - required by SetProgramOptions - [RTD][7], [GitHub][2]
+
+
 SetProgramOptions Examples
 --------------------------
 
