@@ -6,6 +6,15 @@
 SetProgramOptions Python Module
 ===============================
 
+.. admonition:: DEPRECATION NOTICE
+
+   This package was forked by the original author and is now maintained under
+   the name ``ActiveConfigProgramOptions``
+   (`GitLab <https://gitlab.com/semantik-software/code/python/ActiveConfigProgramOptions>`__,
+   `PyPI <https://pypi.org/project/activeconfigprogramoptions/>`__,
+   `Docs <https://semantik-software.gitlab.io/code/python/ActiveConfigProgramOptions>`__).
+   Users of ``SetProgramOptions`` should switch to the new package.
+
 .. toctree::
    :maxdepth: 1
    :caption: Table of Contents:

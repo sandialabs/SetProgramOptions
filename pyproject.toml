@@ -1,7 +1,7 @@
 [tool.poetry]
 name = "setprogramoptions"
 description = "Program options configuration file reader using ConfigParserEnhanced."
-version = "0.5.0.2"
+version = "0.5.0.3"
 license = "LICENSE"
 readme = "README.md"
 keywords = [
@@ -13,9 +13,6 @@ keywords = [
 ]
 authors = [
     "William McLendon <wcmclen@sandia.gov>"
-]
-maintainers = [
-    "Sandia National Laboratories <wg-SetProgramOptions@sandia.gov>",
 ]
 homepage      = "https://github.com/sandialabs/SetProgramOptions"
 documentation = "https://setprogramoptions.readthedocs.io/en/latest/"

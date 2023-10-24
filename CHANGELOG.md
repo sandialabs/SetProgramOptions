@@ -17,6 +17,10 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 #### Todo (for Unreleased)
 -->
 
+## [0.5.0.3] 2023-10-24
+#### Changed
+- Deprecate the package and direct users to the replacement
+
 ## [0.5.0.2] 2022-01-07
 #### Changed
 - Documentation updates

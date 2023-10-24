@@ -2,6 +2,14 @@
 [![SetProgramOptions Testing](https://github.com/sandialabs/SetProgramOptions/actions/workflows/test-driver-core.yml/badge.svg)](https://github.com/sandialabs/SetProgramOptions/actions/workflows/test-driver-core.yml)
 [![Documentation Status](https://readthedocs.org/projects/setprogramoptions/badge/?version=latest)](https://setprogramoptions.readthedocs.io/en/latest/?badge=latest)
 
+> **DEPRECATION NOTICE:**  This package was forked by the original author and
+> is now maintained under the name `ActiveConfigProgramOptions`:
+>
+> * [GitLab](https://gitlab.com/semantik-software/code/python/ActiveConfigProgramOptions)
+> * [PyPI](https://pypi.org/project/activeconfigprogramoptions/)
+> * [Docs](https://semantik-software.gitlab.io/code/python/ActiveConfigProgramOptions)
+>
+> Users of `SetProgramOptions` should switch to the new package.
 
 SetProgramOptions
 =================
